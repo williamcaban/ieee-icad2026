@@ -1,0 +1,36 @@
+# IEEE ICAD 2026 Workshop — environment configuration
+# Copy this file to .workshop-env and fill in the values:
+#   cp .workshop-env.example .workshop-env
+#
+# Source before each workshop session:
+#   source .workshop-env
+#
+# .workshop-env is in .gitignore — your API keys will NOT be committed.
+
+# OpenShift namespace where EvalHub is deployed
+export WORKSHOP_NAMESPACE="workshop-eval"
+
+# EvalHub instance endpoint (auto-detected by 01-platform-setup/setup.sh)
+export EVALHUB_ENDPOINT="https://workshop-evalhub-workshop-eval.apps.ocp.CLUSTER.opentlc.com"
+
+# EvalHub service account token (refreshed by setup.sh)
+export EVALHUB_TOKEN=""
+
+# OpenRouter — free OpenAI-compatible model API
+# Get a free key at: https://openrouter.ai/keys
+export OPENROUTER_API_KEY="sk-or-v1-REPLACE-WITH-YOUR-KEY"
+
+# Local eval-hub-server (started by 01-setup/setup.sh, port avoids macOS conflicts)
+export EVALHUB_LOCAL_PORT="18080"
+
+# Model endpoints (OpenRouter free tier)
+export MODEL_ENDPOINT="https://openrouter.ai/api/v1"
+export MODEL_NAME_A="liquid/lfm-2.5-1.2b-instruct:free"
+export MODEL_NAME_B="meta-llama/llama-3.3-70b-instruct:free"
+export MODEL_NAME="${MODEL_NAME_A}"
+
+# KubeFlow Pipelines endpoint (auto-detected if DSP is deployed)
+export KFP_ENDPOINT="https://ds-pipeline-dspa-workshop-workshop-eval.apps.ocp.CLUSTER.opentlc.com"
+
+# Path to this workshop directory (used by scripts to find .workshop-env)
+export WORKSHOP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

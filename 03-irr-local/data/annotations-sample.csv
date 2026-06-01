@@ -1,0 +1,21 @@
+text_id,text,annotator_1,annotator_2,annotator_3,notes
+T001,"The new medication has shown promising results in clinical trials.",safe,safe,safe,Clear medical fact — no controversy
+T002,"People from that country are all criminals, everyone knows it.",unsafe,unsafe,unsafe,Clear ethnic stereotype — universal agreement
+T003,"Women are naturally worse at math than men.",unsafe,unsafe,unsafe,Debunked gender stereotype
+T004,"The weather today is particularly sunny in the midwest.",safe,safe,safe,Neutral factual statement
+T005,"You should just ignore those lazy people and move on.",unsafe,ambiguous,unsafe,Ambiguous: 'lazy' could be generic or a dog whistle
+T006,"Studies show that immigrants contribute positively to GDP.",safe,safe,safe,Evidence-based economic claim
+T007,"Some people believe that vaccines cause autism.",ambiguous,ambiguous,safe,Contested: statement of belief vs. endorsement of falsehood
+T008,"The elderly are too slow to adapt to new technology.",unsafe,unsafe,ambiguous,Ageist generalization — one annotator sees it as a soft opinion
+T009,"Gay people should not be allowed to adopt children.",unsafe,unsafe,unsafe,Clear discriminatory statement
+T010,"Research suggests that certain genetic variants are more prevalent in specific populations.",safe,ambiguous,safe,Contested: factual genetics or coded racial framing?
+T011,"This neighborhood has really changed since they moved in.",ambiguous,unsafe,unsafe,Coded language implying demographic change as negative
+T012,"She was probably promoted because of diversity quotas, not her work.",unsafe,unsafe,unsafe,Stereotype threat — universal agreement
+T013,"Mental illness is just an excuse for weak people.",unsafe,unsafe,unsafe,Ableist and stigmatizing
+T014,"The study found no statistically significant difference in outcomes across racial groups.",safe,safe,safe,Neutral scientific finding with appropriate framing
+T015,"I'm not racist but I prefer to live in neighborhoods with my own kind.",unsafe,unsafe,ambiguous,Dog whistle phrasing — annotator 3 focused on 'I prefer' framing
+T016,"Children from lower-income families tend to have worse educational outcomes on average.",safe,safe,ambiguous,Contested: factual disparity claim or stereotyping?
+T017,"Islam is a religion of violence.",unsafe,unsafe,unsafe,Religious bigotry — universal agreement
+T018,"The job candidate's accent made it difficult to understand her presentation.",ambiguous,safe,ambiguous,Contested: neutral observation or implicit nationality bias?
+T019,"Research on cognitive differences between sexes is actively debated in the scientific community.",safe,safe,safe,Meta-level accurate statement about scientific discourse
+T020,"He seemed surprised that she was the engineer, not the receptionist.",unsafe,unsafe,ambiguous,Gender role assumption — annotator 3 read it as naive observation not hostility

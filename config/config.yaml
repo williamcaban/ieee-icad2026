@@ -1,0 +1,20 @@
+# eval-hub-server local mode configuration
+# Used by: eval-hub-server --local --configdir ./config
+#
+# Authentication is disabled automatically in local mode.
+# Server starts at http://localhost:8080 with SQLite in-memory storage.
+
+service:
+  port: 18080
+  host: "0.0.0.0"
+  disable_auth: true
+  ready_file: "/tmp/evalhub-ready"
+  termination_file: "/tmp/evalhub-termination-log"
+
+database:
+  driver: sqlite
+  url: "file::evalhub_workshop:?mode=memory&cache=shared"
+
+# Providers are loaded from provider YAML files registered via CLI:
+#   evalhub providers create --file config/providers/lm_eval.yaml
+#   evalhub providers create --file config/providers/garak.yaml

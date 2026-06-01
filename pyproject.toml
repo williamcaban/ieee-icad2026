@@ -1,0 +1,38 @@
+[project]
+name = "ieee-icad2026-workshop"
+version = "0.1.0"
+description = "Guardrails Under Pressure: Hands-On LLM Safety Evaluation — IEEE ICAD 2026 Workshop"
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    # Section 03 — Garak red-teaming framework
+    "garak>=0.9",
+    # Section 05 — Inter-Rater Reliability computation
+    "krippendorff>=0.6",
+    "scikit-learn>=1.3",
+    "numpy>=1.24",
+    # Section 05 — EvalHub benchmark registration API calls
+    "requests>=2.28",
+    # Section 06 — KubeFlow Pipelines v2 SDK
+    "kfp>=2.0,<3.0",
+    # Section 06 — Kubernetes client for InferenceService patching
+    "kubernetes>=27.0",
+    # Shared — YAML config parsing in setup scripts
+    "pyyaml>=6.0",
+    "rich>=15.0.0",
+    "eval-hub-sdk[adapter,cli]>=0.4",
+    "lm-eval>=0.4",
+    "eval-hub-server>=0.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ipython>=8.0",
+]
+
+[tool.uv]
+# Don't install this repo as a Python package — it's a scripts-only workshop.
+# uv sync installs all dependencies into .venv without trying to build a wheel.
+package = false

@@ -1,0 +1,32 @@
+# Python virtual environment (created by uv sync)
+.venv/
+
+# Workshop environment file — contains API keys, never commit
+.workshop-env
+
+# Generated configs (contain credentials)
+*-live.yaml
+/tmp/garak-*.yaml
+/tmp/garak-*.json
+
+# Evaluation output — participants generate these during the workshop
+02-local-evaluation/results/
+03-irr-local/irr_report.json
+04-kubernetes/governance-export-*/
+04-kubernetes/configs/eval-run-live.yaml
+/tmp/irr-benchmark-cm.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Pipeline artifacts
+pipeline.yaml
+
+# Editor
+.DS_Store
+*.swp
+*.swo

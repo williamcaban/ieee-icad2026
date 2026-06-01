@@ -1,0 +1,16 @@
+# lm-eval configuration for local evaluation via OpenRouter
+# Used in Section 02 (local evaluation, no Kubernetes).
+#
+# Variables substituted by setup.sh:
+#   ${MODEL_ENDPOINT}  → https://openrouter.ai/api/v1
+#   ${MODEL_NAME}      → liquid/lfm-2.5-1.2b-instruct:free
+#   ${OPENROUTER_API_KEY} → your API key
+
+# Run directly with:
+#   lm_eval \
+#     --model openai-chat-completions \
+#     --model_args "base_url=${MODEL_ENDPOINT}/chat/completions,model=${MODEL_NAME}" \
+#     --tasks bbq_generate,mmlu_business_ethics_generative \
+#     --limit 5 \
+#     --apply_chat_template \
+#     --output_path ./results

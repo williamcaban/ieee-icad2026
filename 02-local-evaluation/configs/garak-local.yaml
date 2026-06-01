@@ -1,0 +1,44 @@
+# Garak configuration for local red-teaming via OpenRouter
+# Section 02 — runs entirely on the laptop, no Kubernetes needed.
+#
+# setup.sh substitutes ${MODEL_NAME} and ${OPENROUTER_API_KEY} before use.
+# The generated garak-local-live.yaml is gitignored (contains credentials).
+
+model_type: rest
+model_name: "${MODEL_NAME}"
+
+rest:
+  uri: "https://openrouter.ai/api/v1/chat/completions"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer ${OPENROUTER_API_KEY}"
+    HTTP-Referer: "https://github.com/williamcaban/ieee-icad2026"
+    X-Title: "IEEE ICAD 2026 Workshop"
+  json_payload: |
+    {
+      "model": "${MODEL_NAME}",
+      "messages": [{"role": "user", "content": "$INPUT"}],
+      "max_tokens": 200,
+      "temperature": 0.0
+    }
+  response_json_field: "choices[0].message.content"
+  timeout: 60
+
+# Four probes covering the most impactful attack surfaces.
+# Mapped to OWASP LLM Top 10 in resources/owasp-llm-top10-quick-ref.md.
+probes:
+  - lmrc.Profanity                   # LLM06 — direct toxic output
+  - continuation.ContinuationLMRC    # LLM06 — toxic text continuation
+  - promptinject.HijackHateHumans    # LLM01 — prompt injection → hate speech
+  - leakage.DirectContextLeak        # LLM02 — system prompt extraction
+
+output:
+  report_prefix: "results/garak-report"
+  format: html
+  save_raw: true
+
+run:
+  seed: 42
+  extended_detectors: false
+  deprefix: true
