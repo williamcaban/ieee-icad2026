@@ -1,151 +1,129 @@
 # Section 00 — Opening Presentation Guide
 
-**Duration**: 12 minutes
-**Mode**: Presentation (facilitator-led)
+**Duration**: 8 minutes · **Mode**: Presenter-led · **Slides**: `slides/00-opening.md`
+
+Render slides: `marp slides/00-opening.md --output slides/00-opening.html`
 
 ---
 
-## Slide Outline and Talking Points
+## Delivery Notes
 
-### Slide 1 — Title and Context (1 min)
+The opening sets up *why* the work matters before participants touch the keyboard. Keep it honest: the tools are real, the vulnerabilities are real, the regulatory requirements are real.
 
-"Guardrails Under Pressure" — Why the framing?
-
-Guardrails that work in a controlled benchmark environment often degrade under adversarial pressure: prompt injection, jailbreaks, distribution shift across demographic groups, and latency constraints that force shortcuts. Today we measure that pressure empirically, with tools you can take back to your team.
-
-Key setup: this is a hands-on workshop. Every section has a lab. You will run real evaluations against a real model endpoint. The outputs you see are live, not precomputed.
+Do not rush Slides 1–2 (problem framing). Participants who understand the problem engage more during the lab.
 
 ---
 
-### Slide 2 — The Problem Space (2 min)
+## Slide-by-Slide Script
 
-Three failure modes that hurt production LLM deployments:
+### Slide 1 — Title (30 seconds)
 
-1. **Bias that surfaces at scale**: A model that scores 72% fairness on BBQ benchmark with 1,000 evaluation items may score 58% when tested across a specific demographic slice your benchmark did not oversample. Inter-annotator agreement (Section 05) quantifies how much your benchmark's ground truth is itself contested.
+> "This is a hands-on workshop. Every section has a lab. You'll run real evaluations against a real model — the outputs are live, not precomputed. Everything you produce today maps to something you'd do in a production deployment."
 
-2. **Red-team attacks not covered by standard benchmarks**: OWASP LLM Top 10 enumerates 10 threat categories. Standard safety benchmarks cover 3-4 of them. Garak (Section 03) covers all 10 plus 80+ sub-probes.
-
-3. **No automated gate between evaluation results and model routing**: Evaluation happens once at release. Then models accumulate drift. Section 06 shows how to wire evaluation scores into a KubeFlow pipeline that makes routing decisions automatically.
-
-Key statistic to mention: In a 2024 Stanford HELM study, 11 of 30 evaluated frontier models showed measurable demographic bias on at least one subset of the WinoGender benchmark, even when their aggregate fairness score appeared acceptable.
+Set the tone: this is practical, not theoretical.
 
 ---
 
-### Slide 3 — OWASP LLM Top 10 Overview (2 min)
+### Slide 2 — Three Failure Modes (90 seconds)
 
-Walk through the ten threats. Participants will use the quick-ref in `resources/owasp-llm-top10-quick-ref.md` throughout the lab.
+Walk through the three production failure modes:
 
-Emphasis items for this workshop:
+**Bias that hides in aggregate scores.** A model scores 72% on a fairness benchmark. Looks fine. But on the specific demographic slice your users represent — 54%. Standard benchmarks oversample majority groups. You don't know until you look at subgroup scores.
 
-- **LLM01 — Prompt Injection**: The highest-impact threat. Garak's `promptinject` probe family tests this directly.
-- **LLM02 — Insecure Output Handling**: Downstream pipeline vulnerabilities when model output is parsed or executed.
-- **LLM06 — Sensitive Information Disclosure**: Garak's `leakage.DirectContextLeak` probe tests this.
-- **LLM09 — Overreliance**: Relevant to the TruthfulQA benchmark in `safety-and-fairness-v1`.
+**Attacks that standard benchmarks don't cover.** OWASP LLM Top 10 defines 10 threat categories. Most safety suites cover 3-4 of them. Garak covers all 10 plus 80+ sub-probes.
 
-Bridging statement: "Every Garak probe in today's lab maps to at least one OWASP LLM code. The mapping table is in `resources/owasp-llm-top10-quick-ref.md`."
+**Evaluation that happens once.** A score at model release means nothing at month 6. You need an automated gate that evaluates on every update and blocks deployments that regress.
 
 ---
 
-### Slide 4 — AVID Taxonomy (1.5 min)
+### Slide 3 — The Statistic (30 seconds)
 
-AVID (AI Vulnerability and Impacts Database) provides a three-tier taxonomy:
+> "11 out of 30 frontier models in the 2024 Stanford HELM study showed measurable demographic bias on at least one WinoGender subset — even though their aggregate fairness scores looked acceptable."
+
+Pause. Let this land.
+
+> "This is why subgroup evaluation matters. And it's why Section 02 uses BBQ — a benchmark specifically designed to surface subgroup failures."
+
+---
+
+### Slide 4 — What You'll Build (60 seconds)
+
+Walk through the four sections briefly. Emphasise:
+- Sections 01–03 run entirely on the laptop. No cluster access needed.
+- Section 04 uses the same `evalhub` CLI — only the backend changes.
+- Every output from today maps to a compliance artifact.
+
+---
+
+### Slide 5 — The Tool Stack (60 seconds)
+
+Use the "think of it as" column. Participants who know ML but not security will anchor on:
+- lm-eval = pytest for models ✓
+- garak = fuzzing for prompts ✓
+- eval-hub-server = MLflow for safety evals ✓
+
+If anyone asks about specific tools, defer to the relevant section's lab.md.
+
+---
+
+### Slide 6 — Architecture (90 seconds)
+
+Draw attention to the key insight: **the CLI is the same in both phases.** The only change between local and cluster is `evalhub config set base_url`.
+
+This is not a demo tool that you'd throw away in production. It's the production pattern, run locally first to reduce the barrier.
+
+If you have a whiteboard, sketch the two-phase diagram:
 
 ```
-Ethics → Bias and Discrimination
-      → Fairness
-      → Privacy
-Performance → Accuracy
-           → Robustness
-           → Calibration
-Security → Prompt Injection
-        → Data Poisoning
-        → Model Extraction
-```
-
-EvalHub's built-in collection `safety-and-fairness-v1` maps to the Ethics/Bias and Performance/Robustness branches. Garak covers the Security branch.
-
-See `resources/avid-taxonomy-quick-ref.md` for the full tree with EvalHub benchmark assignments.
-
----
-
-### Slide 5 — CWE Mapping for LLM Vulnerabilities (1 min)
-
-CWE (Common Weakness Enumeration) provides a language that security teams already use. Mapping LLM vulnerabilities to CWE IDs makes security review tractable.
-
-Key mappings (full table in `resources/cwe-garak-mapping.md`):
-
-| CWE | Name | Garak Probe |
-|-----|------|-------------|
-| CWE-77 | Command Injection | promptinject family |
-| CWE-200 | Information Exposure | leakage.DirectContextLeak |
-| CWE-284 | Improper Access Control | jailbreak probes |
-
----
-
-### Slide 6 — EvalHub Architecture (2.5 min)
-
-Key architectural concepts participants need to understand before touching the CLI:
-
-**Kubernetes-native evaluation**: EvalHub operates via Custom Resources. A `Collection` CR defines what to evaluate (which benchmarks, thresholds, weights). An `EvalRun` CR triggers evaluation of a specific model endpoint against a Collection. A `Benchmark` CR registers custom benchmark data.
-
-```
-Collection CR ──┐
-                ├──► EvalRun CR ──► Evaluation Job ──► Results (JSON/HTML)
-Model Endpoint ─┘
-```
-
-**Built-in vs. custom benchmarks**: EvalHub ships with 20+ benchmarks including ToxiGen, BBQ, WinoGender, CrowS-Pairs, and TruthfulQA. Custom benchmarks (Section 05) extend this with your own annotated dataset.
-
-**Collection model**: Collections are policies. They define not just which benchmarks to run but the thresholds that constitute "passing." This is the mechanism that connects evaluation to governance.
-
----
-
-### Slide 7 — Workshop Architecture Diagram (1 min)
-
-Show the end-to-end flow:
-
-```
-Participant Laptop
-    │
-    ├── evalhub CLI ──────────► EvalHub API (RHOAI)
-    │                                │
-    ├── Garak ────────────────► Model Endpoint (vLLM/granite-3-2b)
-    │                                │
-    └── kfp CLI ────────────── KubeFlow Pipelines
-                                     │
-                            Evaluate ──► Compare ──► Route
+Laptop phase (01-03):  evalhub CLI → localhost:18080 → subprocess → OpenRouter
+Cluster phase (04):    evalhub CLI → RHOAI cluster  → LMEvalJob pod → OpenRouter
+                                        ↑
+                              Same commands. Different backend.
 ```
 
 ---
 
-### Slide 8 — What You Will Build Today (1 min)
+### Slide 7 — Safety Frameworks (60 seconds)
 
-By the end of 105 minutes, each participant will have:
+Keep this fast. Participants will use the quick-ref cards in `resources/`.
 
-1. Verified a production RHOAI cluster with EvalHub running.
-2. Executed 6 built-in safety benchmarks and interpreted the results table.
-3. Launched 6 Garak red-team probes and mapped findings to OWASP LLM codes.
-4. Defined a custom evaluation policy with per-benchmark and weighted thresholds.
-5. Computed inter-annotator agreement metrics and registered a custom benchmark.
-6. Compiled a KubeFlow pipeline that routes traffic based on comparative safety scores.
+Key point: these frameworks are not bureaucracy — they're the vocabulary that lets different teams (ML, security, legal, compliance) talk about the same risks without talking past each other.
 
-"These are not toy exercises. Every pattern here — the CLI, the YAML, the pipeline — is what you would use in a production deployment."
+> "When you map a garak finding to OWASP LLM01 and CWE-77, a security engineer who has never heard of garak immediately understands what you found."
 
 ---
 
-## Timing Notes
+### Slide 8 — Ground Rules (30 seconds)
 
-- Keep Slide 3 (OWASP) to exactly 2 minutes. Participants will use the quick-ref card; no need to go deep.
-- Slides 1-2 set up the "why" — do not rush these. Participants who understand the problem space engage more in the lab.
-- Slide 6 (architecture) is the most important for lab success. Draw on whiteboard if needed.
-- End at minute 12 exactly. Section 01 setup.sh takes 2 minutes to run — participants should start it immediately.
+Read them. Emphasise `reset.sh` — removing the fear of breaking things is essential for hands-on learning.
+
+> "If something doesn't work — run `bash reset.sh`, then `bash setup.sh`. That gets you back to a clean state in under a minute."
 
 ---
 
-## Q&A During Presentation
+### Slide 9 — Start Section 01
 
-Defer most technical questions to the relevant section. Common pre-lab questions:
+> "Open your terminal, `cd` to the workshop repo, `source .venv/bin/activate`, then `cd 01-setup && bash setup.sh`. Read the output — it tells you exactly what's happening. We'll reconvene in 10 minutes."
 
-- **"What model are we using?"** — Granite 3.2 2B instruct, a compact open-weights model from IBM Research, served via vLLM.
-- **"Does EvalHub work with any model?"** — Yes. It connects via the OpenAI-compatible REST API that vLLM exposes. Any endpoint with that interface works.
-- **"Is Garak production-ready?"** — Garak 0.9+ is used in production red-teaming at several enterprises. It is not a replacement for a full red-team engagement, but it covers systematic automated coverage.
+---
+
+## Pre-Workshop Checklist (Facilitator)
+
+Before the event:
+- [ ] Run `bash setup/platform-setup.sh` on the cluster (creates namespace, deploys EvalHub)
+- [ ] Verify `evalhub health` against the cluster returns healthy
+- [ ] Confirm `workshop-eval` namespace exists and `workshop-sa` has RBAC
+- [ ] Test `evalhub eval run` end-to-end against the cluster (Section 04 pattern)
+- [ ] Have the RHOAI Dashboard URL ready to paste
+- [ ] Confirm OpenRouter free tier is not rate-limited (test with `liquid/lfm-2.5-1.2b-instruct:free`)
+- [ ] Share `.workshop-env` template with cluster endpoint pre-filled (removes Step 3 from Section 01 for participants)
+
+## Common Opening Questions
+
+**"What model are we using?"** — `liquid/lfm-2.5-1.2b-instruct:free` via OpenRouter. Small, fast, and exhibits real bias and injection vulnerabilities — which makes the findings in Section 02 meaningful rather than trivial.
+
+**"Does EvalHub work with any model?"** — Any endpoint that speaks the OpenAI chat completions API. vLLM, Ollama, LiteLLM, the major cloud providers — all work without code changes.
+
+**"Do I need to know Kubernetes?"** — For Sections 01-03, no. Section 04 introduces two `oc` commands, both of which are in the lab.md with expected outputs.
+
+**"Is garak production-ready?"** — Yes. 0.15+ is used in production red-teaming at several enterprises and AI safety organisations. It covers systematic automated probe coverage, not a replacement for a full manual red-team engagement.

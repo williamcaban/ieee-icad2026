@@ -1,54 +1,108 @@
 # Workshop Agenda — Guardrails Under Pressure
 
-**IEEE ICAD 2026 Workshop** | Total: 90 minutes
+**IEEE ICAD 2026** | 90 minutes | `slides/` directory contains Marp-compatible slide decks for each section
 
 ---
 
 ## Timing Table
 
-| Start | End | Dur | Section | Mode | Objectives |
-|-------|-----|-----|---------|------|------------|
-| 0:00 | 0:08 | 8 min | **Opening Presentation** | Slides | Problem space, OWASP LLM Top 10, AVID taxonomy, EvalHub architecture (local → Kubernetes). |
-| 0:08 | 0:18 | 10 min | **Section 01 — Setup** | Hands-on | `source .venv/bin/activate`. Set `OPENROUTER_API_KEY`. Configure `evalhub` CLI. Verify `lm_eval`, `garak`, `evalhub`, `oc`. Open EvalHub UI. |
-| 0:18 | 0:38 | 20 min | **Section 02 — Local Evaluation** | Hands-on | **Track A (12 min):** `lm_eval` CLI → OpenRouter; read BBQ bias + MMLU ethics scores. **Track B (8 min):** `garak` → OpenRouter; read HTML vulnerability report; map to OWASP codes. |
-| 0:38 | 0:46 | 8 min | **Break + Q&A** | Break | Questions. Token refresh: `bash 01-setup/setup.sh`. |
-| 0:46 | 0:58 | 12 min | **Section 03 — IRR Benchmark (Local)** | Hands-on | Inspect `annotations-sample.csv`. Run `compute_irr.py` → Cohen's Kappa + Krippendorff's Alpha. Produce `irr_report.json`. Preview benchmark spec with `--dry-run`. |
-| 0:58 | 1:20 | 22 min | **Section 04 — Kubernetes** | Hands-on | Submit `LMEvalJob` CR + watch in EvalHub UI. Register IRR benchmark via `register_benchmark.py`. Create custom collection with thresholds. Export governance artifacts → EU AI Act / NIST AI RMF mapping. |
-| 1:20 | 1:30 | 10 min | **Closing Discussion** | Discussion | Artifact collection checklist. KubeFlow pipeline A/B routing overview (`resources/kubeflow-pipeline-reference/`). Regulatory framework summary. Q&A. |
-| **Total** | | **90 min** | | | |
+| Start | End | Dur | Section | Slides | Objectives |
+|-------|-----|-----|---------|--------|------------|
+| 0:00 | 0:08 | 8 min | **Opening** | `slides/00-opening.md` | Problem framing (3 failure modes), tool stack, architecture overview, ground rules |
+| 0:08 | 0:18 | 10 min | **01 — Setup** | `slides/01-setup-slides.md` | Start `eval-hub-server`, set API key, verify 4 tools, confirm providers registered |
+| 0:18 | 0:38 | 20 min | **02 — Local Evaluation** | `slides/02-local-eval-slides.md` | **Track A (12 min):** `evalhub eval run` → BBQ bias + MMLU ethics, interpret scores. **Track B (8 min):** Garak probes, map to OWASP codes |
+| 0:38 | 0:46 | 8 min | **Break + Q&A** | — | Questions, catch-up, token refresh (`bash 01-setup/setup.sh`) |
+| 0:46 | 0:58 | 12 min | **03 — IRR Benchmark** | `slides/03-irr-slides.md` | Inspect CSV, compute Kappa + Alpha, produce `irr_report.json`, `--dry-run` preview |
+| 0:58 | 1:20 | 22 min | **04 — Kubernetes** | `slides/04-kubernetes-slides.md` | Switch CLI to cluster, browse collections, submit `LMEvalJob`, register IRR benchmark, export governance artifacts |
+| 1:20 | 1:30 | 10 min | **Closing** | `slides/04-kubernetes-slides.md` (final slide) | Takeaways by role, regulatory summary, next steps |
+
+---
+
+## The Journey Map
+
+Each lab starts with this tracker so participants always know where they are:
+
+```
+[ ● 01 Setup ] → [ 02 Local Eval ] → [ 03 IRR ] → [ 04 Kubernetes ]
+[ 01 Setup ] → [ ● 02 Local Eval ] → [ 03 IRR ] → [ 04 Kubernetes ]
+[ 01 Setup ] → [ 02 Local Eval ] → [ ● 03 IRR ] → [ 04 Kubernetes ]
+[ 01 Setup ] → [ 02 Local Eval ] → [ 03 IRR ] → [ ● 04 Kubernetes ]
+```
 
 ---
 
 ## Two-Phase Architecture
 
 ```
-LOCAL (Sections 01–03)                KUBERNETES (Section 04)
-──────────────────────────────────    ─────────────────────────────────────
-01  Setup           laptop only       04a  LMEvalJob CR → EvalHub UI
-02  lm-eval + garak laptop → OpenRouter   04b  Register IRR benchmark
-03  IRR computation laptop only           04c  Custom collection + thresholds
-                                          04d  Governance artifact export
-No cluster access needed              Requires oc login + EvalHub healthy
+SECTIONS 01–03 (laptop, no cluster needed)
+─────────────────────────────────────────
+evalhub CLI → eval-hub-server (localhost:18080)
+                   │
+       ┌───────────┴───────────┐
+  lm_eval adapter         garak adapter
+  (static benchmarks)    (adversarial probes)
+       └───────────┬───────────┘
+                   ▼
+             OpenRouter API (free cloud inference)
+
+SECTION 04 (same CLI, different base_url)
+─────────────────────────────────────────
+evalhub CLI → EvalHub on RHOAI cluster
+                   │
+             LMEvalJob pods → OpenRouter
+             Results → persistent storage + EvalHub UI
+             Artifacts → governance export
 ```
 
 ---
 
-## Pacing Notes
+## What Gets Produced
 
-- **Section 02 is the core lab** — Tracks A and B can run in parallel (start garak, then read lm-eval results while it runs).
-- **Section 03** is intentionally short and self-contained — all local, no dependencies on cluster state.
-- **Section 04** covers the most ground. Parts B/C/D can run while Part A's LMEvalJob is executing in the background.
-- **Break (0:38–0:46)**: Confirm LMEvalJob from Section 03 (if submitted early) has not errored. Facilitator should verify cluster health before the break.
+| Section | Artifact | Used In |
+|---------|---------|---------|
+| 02 | `evalhub eval results` (bias scores, vulnerability findings) | Section 04 comparison, governance export |
+| 03 | `irr_report.json` (α = 0.8118, 20 items) | Section 04 benchmark registration |
+| 04 | `cluster-eval-results.json` | Governance export |
+| 04 | `lmevaljob-cr.yaml` | GitOps, audit trail |
+| 04 | `garak-report.jsonl` | Governance export |
+| 04 | `irr_report.json` (copy) | Governance export |
+
+---
+
+## Facilitator Notes
+
+**Section 02 parallel tracks** — Tracks A and B can run in parallel for faster participants: start garak, then read lm-eval results while it runs. Both complete within the 20-minute window.
+
+**Section 03 is cluster-independent** — If the cluster has issues, Section 03 proceeds on the laptop. Resume Section 04 when cluster is available.
+
+**The break (0:38–0:46)** — Use this to verify Section 04 cluster health. Check `evalhub health` against the cluster endpoint.
+
+**OpenRouter rate limit** — Free tier: 20 requests/minute. Sections 02 and 04 each use ~10 requests with `--param limit=5`. Leave 60 seconds between sections to avoid 429 errors.
 
 ---
 
 ## Contingency Plans
 
-| Scenario | Response |
-|----------|----------|
-| OpenRouter 429 (rate limit) | Use `--limit 3`; wait 30 s; or switch to `liquid/lfm-2.5-1.2b-instruct:free` |
-| `lm_eval` command not found | `source .venv/bin/activate` from repo root |
-| Cluster login expired | `bash 01-setup/setup.sh` refreshes the EvalHub token |
-| EvalHub not ready | Section 03 (IRR) is fully local — proceed there while cluster is fixed |
+| Scenario | Recovery |
+|----------|---------|
+| OpenRouter 429 | `--param limit=3`, wait 60 s |
+| `evalhub health` fails (local) | `bash 01-setup/setup.sh` resets everything |
+| Cluster token expired | `bash 04-kubernetes/setup.sh` refreshes token |
 | LMEvalJob stuck | `oc describe lmevaljob -n workshop-eval`; alert facilitator |
 | Participant behind | `bash reset.sh` + `bash setup.sh` in current section |
+| Cluster down entirely | Section 03 (IRR) is fully local; demo Section 04 with recorded output |
+
+---
+
+## Slide Rendering
+
+```bash
+# Install Marp CLI (one-time)
+npm install -g @marp-team/marp-cli
+
+# Render all slides to HTML
+for f in slides/*.md; do marp "$f"; done
+
+# Present in browser (auto-reload on save)
+marp --watch --server slides/
+```

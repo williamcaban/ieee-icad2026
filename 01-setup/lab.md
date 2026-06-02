@@ -1,68 +1,87 @@
-# Section 01 Lab — Environment Setup
+# Section 01 — Environment Setup
 
-**Duration**: 10 minutes
-**Prerequisites**: Repo cloned, `uv sync` run at the repo root
+> **Where you are:** `[ ● 01 Setup ] → [ 02 Local Eval ] → [ 03 IRR ] → [ 04 Kubernetes ]`
+
+**Duration**: 10 minutes · **Needs cluster?** No — laptop only
+
+---
+
+## What This Section Accomplishes
+
+You activate the Python environment, wire up your OpenRouter API key, and run `setup.sh` — which starts the local `eval-hub-server` and registers the lm-eval and garak evaluation providers. By the end you have a working `evalhub` CLI pointed at a live local server.
+
+```
+Your laptop
+  .venv (uv) ─────► all tools pre-installed at exact versions
+  .workshop-env ──► OPENROUTER_API_KEY, MODEL_NAME, endpoints
+  eval-hub-server → localhost:18080 (started by setup.sh)
+```
+
+> **Why uv?** It's Python's equivalent of `npm ci` — it installs the exact dependency tree from `uv.lock` so every participant is running identical tool versions. No version drift, no "works on my machine."
 
 ---
 
 ## Learning Objectives
 
-- Activate the `.venv` and verify all four tools are ready.
-- Set OpenRouter API key in `.workshop-env`.
-- Configure the `evalhub` CLI against the workshop EvalHub instance.
-- Confirm local tools (`lm_eval`, `garak`) and cluster access (`oc`) work.
+- Activate `.venv` and verify all four tools respond correctly.
+- Set your `OPENROUTER_API_KEY` in `.workshop-env`.
+- Understand what `setup.sh` does before you run it.
+- Confirm the local `eval-hub-server` is running with both providers registered.
 
 ---
 
 ## Step 1 — Activate the Environment
 
 ```bash
-# From the workshop repo root
+# From the workshop repo root:
 source .venv/bin/activate
-
-# Verify the four key tools
-lm_eval --version
-# Expected: lm-eval, version 0.4.x
-
-garak --version
-# Expected: garak 0.15.x
-
-evalhub version
-# Expected: evalhub 0.4.x
-
-oc version --client
-# Expected: Client Version: 4.1x.x
 ```
 
-If any tool is missing, run `uv sync` first.
+Verify the four tools are available:
+
+```bash
+lm_eval --help | head -1        # Expected: usage: lm-eval ...
+garak --version                 # Expected: garak LLM vulnerability scanner v0.15.x
+evalhub version                 # Expected: evalhub 0.4.x
+oc version --client             # Expected: Client Version: 4.1x.x (optional for Sections 01-03)
+```
+
+**What each tool is:**
+
+| Tool | One-sentence description |
+|------|--------------------------|
+| `lm_eval` | Runs curated safety benchmarks against any OpenAI-compatible model endpoint |
+| `garak` | Systematically probes models with adversarial inputs to find exploitable weaknesses |
+| `evalhub` | CLI for submitting evaluation jobs and reading results — works identically against the local server and the cluster |
+| `oc` | OpenShift CLI — only needed for Section 04 |
 
 ---
 
-## Step 2 — Configure Your Workshop Environment
+## Step 2 — Set Your OpenRouter API Key
 
 ```bash
-# Copy the example env file (only needed once)
 cp .workshop-env.example .workshop-env
 ```
 
-Open `.workshop-env` in your editor and set your OpenRouter API key:
+Open `.workshop-env` in your editor and set the API key:
 
 ```bash
-# Get a free key at: https://openrouter.ai/keys
-# Then edit the file:
 nano .workshop-env        # or: code .workshop-env / vi .workshop-env
 ```
 
-Find the line:
+Find this line and replace the placeholder:
+
 ```bash
 export OPENROUTER_API_KEY="sk-or-v1-REPLACE-WITH-YOUR-KEY"
 ```
 
-Replace with your actual key, then save and source the file:
+Get a free key at **https://openrouter.ai/keys** — it takes 30 seconds. No credit card required.
+
+Then source the file:
 
 ```bash
 source .workshop-env
-echo "Key set: ${OPENROUTER_API_KEY:0:15}..."
+echo "Key: ${OPENROUTER_API_KEY:0:20}..."   # Should print your key prefix
 ```
 
 ---
@@ -73,25 +92,62 @@ echo "Key set: ${OPENROUTER_API_KEY:0:15}..."
 bash setup.sh
 ```
 
-This configures the `evalhub` CLI with the workshop cluster endpoint and token.
+**What `setup.sh` does** (read this before running it):
+
+1. Verifies all four tools are on `PATH`
+2. Sources `.workshop-env` and validates your API key
+3. Exports `OPENAI_API_KEY` (the alias that `lm-eval` and `garak` read internally)
+4. Starts `eval-hub-server --local` on port `18080` in the background
+5. Registers the `lm_evaluation_harness` and `garak` providers
+6. If logged in to OpenShift: configures the cluster endpoint for Section 04
 
 Expected output:
 
 ```
-[OK]    evalhub CLI found: evalhub 0.4.0
-[OK]    Loaded .workshop-env
-[OK]    EVALHUB_ENDPOINT: https://workshop-evalhub-workshop-eval.apps...
-[OK]    CLI configured.
-[OK]    EvalHub is healthy.
-[OK]    EvalHub UI: https://workshop-evalhub-workshop-eval.apps...
+[OK]    lm_eval: ok
+[OK]    garak: garak LLM vulnerability scanner v0.15.0
+[OK]    evalhub: evalhub, version 0.4.0
+[OK]    eval-hub-server: eval-hub-server 0.4.1
+[OK]    OPENROUTER_API_KEY is set (73 chars).
+[INFO]  Starting local eval-hub-server on port 18080...
+[OK]    Local eval-hub-server ready at http://localhost:18080 (PID 12345)
+[OK]    Provider registered: lm_evaluation_harness
+[OK]    Provider registered: garak
+```
+
+Then source the updated env file:
+
+```bash
+source .workshop-env
 ```
 
 ---
 
-## Step 4 — Verify OpenRouter Access
+## Step 4 — Verify the Local Server
 
 ```bash
-# Quick API test — should return a short response
+evalhub health
+```
+
+Expected:
+
+```json
+{"status": "healthy", "build": "0.4.1", ...}
+```
+
+```bash
+evalhub providers list
+```
+
+Expected: two rows — `lm_evaluation_harness` (2 benchmarks) and `garak` (2 benchmarks).
+
+> **🔁 Reuse pattern:** `eval-hub-server` with `--local` runs on any laptop with no infrastructure. The same provider YAMLs in `config/providers/` define what benchmarks are available. To add a new evaluation framework to your own projects, copy a provider YAML and write an adapter in `adapters/`.
+
+---
+
+## Step 5 — Verify OpenRouter Access
+
+```bash
 curl -s --max-time 10 \
   -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
   -H "Content-Type: application/json" \
@@ -99,53 +155,41 @@ curl -s --max-time 10 \
        "messages":[{"role":"user","content":"Say OK"}],"max_tokens":3}' \
   https://openrouter.ai/api/v1/chat/completions | \
   python3 -c "import sys,json; d=json.load(sys.stdin); \
-    print('OpenRouter OK:', d['choices'][0]['message']['content'])"
+    print('OpenRouter:', d['choices'][0]['message']['content'])"
 ```
 
-Expected:
+Expected: `OpenRouter: OK`
 
-```
-OpenRouter OK: OK
+---
+
+## Checkpoint ✓
+
+```bash
+# All must succeed:
+evalhub health | python3 -c "import sys,json; print('Server:', json.load(sys.stdin)['status'])"
+evalhub providers list | grep -c "lm_evaluation\|garak"   # should print 2
+echo "Key set: ${#OPENROUTER_API_KEY} chars"               # should be > 0
 ```
 
 ---
 
-## Step 5 — Open the EvalHub UI (Kubernetes)
+## What You've Built
 
-The EvalHub UI is your dashboard for all cluster-side evaluations (Sections 03–04).
-Open it in your browser now so it's ready:
+You now have:
+- A fully functional `eval-hub-server` running locally with lm-eval and garak providers
+- The `evalhub` CLI configured to point at it
+- OpenRouter API access verified
 
-```bash
-# Print the URL
-echo "https://$(oc get route workshop-evalhub -n workshop-eval \
-  -o jsonpath='{.spec.host}' 2>/dev/null)"
-```
-
-Log in with your OpenShift credentials when prompted.
-
----
-
-## Checkpoint
-
-```bash
-# All four must print version numbers
-lm_eval --version && garak --version && evalhub version && oc version --client
-
-# OpenRouter key must be non-empty
-echo "Key length: ${#OPENROUTER_API_KEY}"   # must be > 0
-
-# EvalHub must be healthy
-evalhub health
-```
+**In Section 02**, you'll submit your first evaluation job through this server — the same `evalhub eval run` command you'll use against the cluster in Section 04.
 
 ---
 
 ## Troubleshooting
 
-**`lm_eval: command not found`**: Run `source .venv/bin/activate` from the repo root.
+**`eval-hub-server` not found** — Run `source .venv/bin/activate` from the repo root.
 
-**OpenRouter returns 401**: Check `.workshop-env` has your correct API key, then `source .workshop-env`.
+**OpenRouter returns 401** — Check `.workshop-env` has the correct key and re-run `source .workshop-env`.
 
-**`evalhub health` fails**: Your cluster token may have expired — run `bash setup.sh` to refresh it.
+**`evalhub health` fails** — The server may have stopped. Re-run `bash setup.sh`.
 
-**`oc: command not found`**: `oc` is only needed for Sections 03–04. You can skip this check and proceed to Section 02.
+**`oc version` fails** — That's fine. `oc` is only needed for Section 04. Continue to Section 02.

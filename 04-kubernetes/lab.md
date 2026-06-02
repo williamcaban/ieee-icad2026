@@ -1,27 +1,60 @@
-# Section 04 Lab — Kubernetes: EvalHub, Custom Benchmarks & Governance
+# Section 04 — Kubernetes: EvalHub, Benchmarks & Governance
 
-**Duration**: 22 minutes
-**Prerequisites**: Sections 01–03 complete, `oc` logged in to cluster
+> **Where you are:** `[ 01 Setup ] → [ 02 Local Eval ] → [ 03 IRR ] → [ ● 04 Kubernetes ]`
+
+**Duration**: 22 minutes · **Needs cluster?** Yes — `oc` login required
+
+---
+
+## What This Section Accomplishes
+
+You switch the `evalhub` CLI from `localhost:18080` to the cluster EvalHub in one command, then run the same evaluation workflow you ran locally — but now it executes inside Kubernetes pods, stores results persistently, and produces governance artifacts.
+
+```
+           SECTION 04 — SAME CLI, DIFFERENT BACKEND
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│  evalhub CLI ──► EvalHub on RHOAI cluster               │
+│   (same commands as Sections 02-03)                     │
+│                        │                               │
+│                 LMEvalJob pod ──► OpenRouter            │
+│                        │                               │
+│                 Results stored persistently             │
+│                 Visible in EvalHub UI                   │
+│                 Auditable in Kubernetes CR history      │
+│                                                         │
+│  PLUS:                                                  │
+│  Register IRR benchmark from Section 03                 │
+│  Export governance artifacts (EU AI Act / NIST RMF)     │
+└─────────────────────────────────────────────────────────┘
+```
+
+> **Conceptual anchor:** This is the same shift as going from `python train.py` on your laptop to submitting a Kubernetes `TrainingJob`. The evaluation logic is identical; what changes is who orchestrates it, where results live, and what audit trail exists.
+
+---
+
+## Local vs. Cluster — Side by Side
+
+| Dimension | Sections 01–03 (local) | Section 04 (cluster) |
+|-----------|----------------------|----------------------|
+| Server | `eval-hub-server` on port 18080 | EvalHub operator on RHOAI |
+| Job execution | Host subprocess on your laptop | Kubernetes `LMEvalJob` pod |
+| Results storage | In-memory SQLite (lost on restart) | Persistent EvalHub storage |
+| Auth required | No | Yes (SA token via `setup.sh`) |
+| Visible in UI | No | Yes — RHOAI Dashboard |
+| Audit trail | Log files | Kubernetes CR history |
+| **CLI command** | **Identical** | **Identical** |
+
+The only change: `evalhub config set base_url <cluster-url>` — which `setup.sh` does for you.
 
 ---
 
 ## Learning Objectives
 
-- Submit a `LMEvalJob` CR and monitor it via `oc` CLI.
-- Read scored results directly from the LMEvalJob status (the governance artifact).
-- Store your IRR benchmark metadata as a Kubernetes ConfigMap for team visibility.
-- Export evaluation results mapped to EU AI Act Articles and NIST AI RMF.
-- Access the EvalHub UI via the RHOAI Dashboard.
-
----
-
-## Architecture
-
-EvalHub on RHOAI 0.3.x exposes its API at `/api/v1/evaluations/*`:
-- Collections & providers → `evalhub collections list` / `evalhub providers list`
-- Evaluations → `LMEvalJob` CRs via `oc apply -f` or `evalhub eval run`
-- Results → `LMEvalJob.status.results` JSON + `evalhub eval results`
-- UI → RHOAI Dashboard (Evaluations section)
+- Switch the `evalhub` CLI from local to cluster in a single command.
+- Submit an `LMEvalJob` and watch it execute in the cluster.
+- Register your IRR benchmark from Section 03 as a cluster-side benchmark.
+- Export governance artifacts that satisfy EU AI Act and NIST AI RMF documentation requirements.
 
 ---
 
@@ -33,221 +66,173 @@ bash setup.sh
 source ../.workshop-env
 ```
 
+`setup.sh` does three things:
+1. Switches `evalhub config set base_url` to the cluster endpoint
+2. Creates the `openrouter-credentials` secret in the cluster
+3. Applies the RBAC grants that let `workshop-sa` call EvalHub APIs
+
+Open the EvalHub UI in your browser — URL is printed by `setup.sh`.
+
 ---
 
-## Part A — Explore EvalHub Collections & Submit Evaluation (6 min)
-
-### Browse available collections and providers
+## Part A — Browse the Cluster Collections (3 min)
 
 ```bash
 evalhub collections list
 evalhub providers list
-evalhub collections describe safety-and-fairness-v1
+evalhub providers describe lm_evaluation_harness
 ```
 
-### Submit an evaluation via evalhub CLI
+These are the *same commands* you'd run against the local server. The output is the cluster's built-in collections: `safety-and-fairness-v1`, `toxicity-and-ethical-principles`.
+
+---
+
+## Part B — Submit a Cluster Evaluation (6 min)
 
 ```bash
 evalhub eval run \
-  --name icad2026-cluster-eval \
+  --name "cluster-bbq-$(date +%s)" \
   --provider lm_evaluation_harness \
   --benchmark bbq_generate \
-  --benchmark mmlu_business_ethics_generative \
-  --model-url "${MODEL_ENDPOINT}/chat/completions" \
+  --model-url "${MODEL_ENDPOINT}" \
   --model-name "${MODEL_NAME}" \
-  --param limit=5 \
-  --param apply_chat_template=true
+  --param limit=5
 ```
 
-### Or apply directly as a Kubernetes CR
+Watch it execute:
 
 ```bash
-oc apply -f configs/eval-run-live.yaml
-oc get lmevaljob icad2026-cluster-eval -n workshop-eval -w
+oc get lmevaljob -n workshop-eval -w
 ```
 
-### Read results via evalhub CLI
+When complete, compare cluster results to Section 02 local results:
 
 ```bash
-evalhub eval status
-evalhub eval results icad2026-cluster-eval
+evalhub eval results <cluster-job-id>
 ```
 
-Or directly from the Kubernetes CR:
-
-```bash
-oc get lmevaljob icad2026-cluster-eval -n workshop-eval \
-  -o jsonpath='{.status.results}' 2>/dev/null | python3 -c "
-import sys, json, math
-d = json.loads(sys.stdin.read())
-print('\n=== CLUSTER EVALUATION RESULTS ===\n')
-for task, metrics in d.get('results', {}).items():
-    print(f'Task: {task}')
-    for k, v in metrics.items():
-        if isinstance(v, float) and not math.isnan(v) and not k.endswith('stderr'):
-            print(f'  {k.split(\",\")[0]}: {v:.4f}')
-    print()
-"
-```
-
-Expected output:
-```
-=== CLUSTER EVALUATION RESULTS ===
-
-Task: bbq_generate
-  acc: 0.2000
-  accuracy_amb: 0.0000
-  accuracy_disamb: 0.5000
-  amb_bias_score: 0.3333
-
-Task: mmlu_business_ethics_generative
-  exact_match: 0.0000
-```
-
-**Compare with Section 02**: These cluster results should match the local lm-eval run.
-The cluster adds: persistent storage, team visibility, auditable CR history.
+> **So what?** The scores should be identical or very close to Section 02. The difference: these results are now in persistent storage, tied to a Kubernetes CR, and visible to every team member who has access to the cluster. The local run was ephemeral; this one is auditable.
 
 ---
 
-## Part B — Store IRR Benchmark on the Cluster (5 min)
+## Part C — Register Your IRR Benchmark (5 min)
 
-Register the IRR benchmark metadata as a Kubernetes ConfigMap so the team can access it:
+Section 03 produced `irr_report.json`. Now register it on the cluster:
 
 ```bash
-# Read the IRR report and create a ConfigMap
-python3 - <<'EOF'
-import json, subprocess, sys
-
-report = json.load(open('../03-irr-local/irr_report.json'))
-alpha = report['krippendorff_alpha']['value']
-items = report['benchmark_items_count']
-labels = {i['label']: 0 for i in report['benchmark_items']}
-for item in report['benchmark_items']:
-    labels[item['label']] += 1
-
-# Build ConfigMap YAML
-cm = f"""apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: icad2026-irr-benchmark
-  namespace: workshop-eval
-  labels:
-    workshop: icad2026
-    benchmark-type: custom-irr
-  annotations:
-    alpha: "{alpha:.4f}"
-    recommendation: "{report['recommendation']}"
-    items: "{items}"
-    label-distribution: "{json.dumps(labels)}"
-data:
-  irr_report.json: |
-"""
-for line in json.dumps(report, indent=2).split('\n'):
-    cm += f"    {line}\n"
-
-with open('/tmp/irr-benchmark-cm.yaml', 'w') as f:
-    f.write(cm)
-print("ConfigMap written to /tmp/irr-benchmark-cm.yaml")
-print(f"Alpha: {alpha:.4f} | Items: {items} | Distribution: {labels}")
-EOF
-
-oc apply -f /tmp/irr-benchmark-cm.yaml
-echo "IRR benchmark ConfigMap registered:"
-oc get configmap icad2026-irr-benchmark -n workshop-eval \
-  -o jsonpath='{.metadata.annotations}' | python3 -m json.tool
+python3 ../03-irr-local/scripts/register_benchmark.py \
+  --report ../03-irr-local/irr_report.json \
+  --name "workshop-irr-safety-v1"
 ```
+
+Expected:
+
+```
+Alpha = 0.8118 — OK to register.
+Benchmark registered: workshop-irr-safety-v1
+Verify with: evalhub benchmarks describe workshop-irr-safety-v1
+```
+
+Verify in the RHOAI Dashboard: **Evaluations → Benchmarks → workshop-irr-safety-v1**.
+
+The benchmark entry includes `irr_metadata` — any team member can see the reliability evidence without needing the original CSV.
+
+> **🔁 Reuse pattern for consultants:** This is the workflow for onboarding a client's custom benchmark into EvalHub. Collect annotations from client SMEs → compute IRR → register if α ≥ 0.67. The benchmark then becomes a shared organizational asset that any eval job can reference.
 
 ---
 
-## Part C — Governance Artifact Export (6 min)
+## Part D — Export Governance Artifacts (5 min)
 
 ```bash
-# Create export directory
 EXPORT_DIR="governance-export-$(date +%Y%m%d)"
 mkdir -p "${EXPORT_DIR}"
 
-# 1. Cluster evaluation results (the key governance artifact)
-oc get lmevaljob icad2026-cluster-eval -n workshop-eval \
-  -o jsonpath='{.status.results}' > "${EXPORT_DIR}/cluster-eval-results.json"
-echo "✓ Cluster results exported"
+# Cluster evaluation results
+evalhub eval results <cluster-job-id> --format json > \
+  "${EXPORT_DIR}/cluster-eval-results.json" && echo "✓ cluster-eval-results.json"
 
-# 2. IRR benchmark spec
-cp ../03-irr-local/irr_report.json "${EXPORT_DIR}/irr_report.json"
-echo "✓ IRR report exported"
+# IRR reliability evidence
+cp ../03-irr-local/irr_report.json "${EXPORT_DIR}/" && echo "✓ irr_report.json"
 
-# 3. LMEvalJob CR (the policy as code)
-oc get lmevaljob icad2026-cluster-eval -n workshop-eval -o yaml \
-  | grep -v "resourceVersion\|uid\|creationTimestamp\|managedFields" \
-  > "${EXPORT_DIR}/lmevaljob-cr.yaml"
-echo "✓ LMEvalJob CR exported"
+# Kubernetes CR (the policy as code)
+oc get lmevaljob -n workshop-eval -o yaml | \
+  grep -v "resourceVersion\|uid\|creationTimestamp\|managedFields" \
+  > "${EXPORT_DIR}/lmevaljob-cr.yaml" && echo "✓ lmevaljob-cr.yaml"
 
-# 4. Garak report from Section 02
+# Garak vulnerability report from Section 02
 cp ../02-local-evaluation/results/garak-report.report.jsonl \
-  "${EXPORT_DIR}/garak-report.jsonl" 2>/dev/null && echo "✓ Garak report exported"
+  "${EXPORT_DIR}/" 2>/dev/null && echo "✓ garak-report.jsonl"
 
 echo ""
 echo "Governance artifacts in: ${EXPORT_DIR}/"
 ls -lh "${EXPORT_DIR}/"
 ```
 
-### Map Artifacts to Regulatory Frameworks
+### What each artifact satisfies
 
-```bash
-cat ../resources/governance-checklist.md | grep -A3 "cluster-eval\|lmevaljob\|irr_report\|EU AI Act"
-```
-
-| Artifact | EU AI Act Article | NIST AI RMF Function |
-|---------|-----------------|---------------------|
+| Artifact | EU AI Act | NIST AI RMF |
+|---------|-----------|-------------|
 | `cluster-eval-results.json` | Art. 9 — Risk management | MEASURE 2.5 |
 | `lmevaljob-cr.yaml` | Art. 9 + Art. 13 — Transparency | GOVERN 1.1 |
 | `irr_report.json` | Art. 10 — Data governance | MAP 2.3 |
 | `garak-report.jsonl` | Art. 9 — Adversarial risk | MEASURE 2.6 |
 
----
-
-## Part D — View in RHOAI Dashboard (5 min)
-
-The EvalHub UI is integrated into the RHOAI Dashboard:
-
-```bash
-# Get the dashboard URL
-oc get route rhods-dashboard -n redhat-ods-applications \
-  -o jsonpath='{.spec.host}' 2>/dev/null && echo ""
-```
-
-Open the printed URL in your browser. Navigate to:
-**AI & ML → Evaluations** (or search for "EvalHub" in the nav)
-
-You should see:
-- `icad2026-cluster-eval` with status Complete
-- Benchmark scores per task
-- Run metadata including model name and timestamp
+> **So what?** When an auditor asks "how do you demonstrate that your AI system's risk was assessed before deployment?" — this export directory is the answer. The LMEvalJob CR is version-controlled (it's a Kubernetes object with a history). The IRR report shows the benchmark was validated before use. The cluster eval results show a quantified score against a defined threshold. The garak report shows adversarial coverage.
 
 ---
 
-## Checkpoint
+## Part E — View in RHOAI Dashboard (3 min)
 
 ```bash
-# LMEvalJob must show Succeeded
-oc get lmevaljob icad2026-cluster-eval -n workshop-eval \
-  -o jsonpath='{.status.reason}' | grep -q "Succeeded" && echo "Cluster eval: OK"
-
-# IRR ConfigMap must exist
-oc get configmap icad2026-irr-benchmark -n workshop-eval \
-  -o jsonpath='{.metadata.annotations.alpha}' && echo " (alpha)"
-
-# Governance export must have 3+ files
-ls governance-export-*/  | wc -l | grep -qE "^[3-9]" && echo "Governance export: OK"
+echo "Dashboard: https://$(oc get route rhods-dashboard \
+  -n redhat-ods-applications -o jsonpath='{.spec.host}' 2>/dev/null)"
 ```
+
+Navigate to **AI & ML → Evaluations** (or search "EvalHub"). You should see:
+- Your cluster evaluation jobs with status and scores
+- The `workshop-irr-safety-v1` benchmark under Benchmarks
+
+This is what a team lead or MLOps engineer sees without needing CLI access.
+
+> **🔁 Reuse pattern for ML engineers:** The `evalhub eval run` command is what you'd add to a CI/CD pipeline. On every model update: run the command, check the exit code (0 = all benchmarks passed, 1 = one or more failed), gate the deployment on the result. The `lmevaljob-cr.yaml` is the policy file that goes in your GitOps repo alongside the model deployment manifest.
+
+---
+
+## Checkpoint ✓
+
+```bash
+# Cluster eval completed
+oc get lmevaljob -n workshop-eval --no-headers | grep -c "Succeeded"
+
+# IRR benchmark registered
+evalhub benchmarks describe workshop-irr-safety-v1 2>/dev/null | head -5
+
+# Governance export exists
+ls governance-export-*/cluster-eval-results.json 2>/dev/null && echo "Export: OK"
+```
+
+---
+
+## What You've Built
+
+Over the last 80 minutes you have:
+
+1. **Evaluated a model locally** — bias scores, ethics accuracy, adversarial vulnerabilities
+2. **Validated a custom benchmark** — IRR metrics that prove the labels are trustworthy
+3. **Moved to the cluster** — same results, now persistent, auditable, and visible in the UI
+4. **Registered a benchmark** — reproducible, discoverable by other teams
+5. **Exported governance artifacts** — mapped to EU AI Act and NIST AI RMF requirements
+
+These patterns are production-grade. The CLI commands, the YAML files, the provider adapters, the IRR workflow — all of it is directly reusable.
 
 ---
 
 ## Troubleshooting
 
-**LMEvalJob stuck in Scheduled**: Check `oc describe lmevaljob icad2026-cluster-eval -n workshop-eval`. Alert facilitator if pod never starts.
+**`evalhub eval run` returns 401** — Token expired. Re-run `bash setup.sh` to refresh.
 
-**`oc get lmevaljob` shows Failed**: Check logs: `oc logs icad2026-cluster-eval -n workshop-eval --all-containers | tail -20`.
+**LMEvalJob stuck in Scheduled** — Check: `oc describe lmevaljob -n workshop-eval`. Alert the facilitator.
 
-**`status.results` is empty**: The job may have failed before writing results. Check `oc get lmevaljob ... -o jsonpath='{.status.message}'`.
+**`register_benchmark.py` returns 409 Conflict** — Already registered. Run `bash reset.sh` then retry.
 
-**RHOAI Dashboard doesn't show EvalHub section**: This feature requires RHOAI 2.10+. Check the dashboard version and ask the facilitator.
+**`governance-export` directory empty** — The cluster eval may have failed. Check: `oc get lmevaljob -n workshop-eval -o jsonpath='{.items[0].status.reason}'`.
