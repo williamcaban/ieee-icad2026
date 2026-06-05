@@ -29,10 +29,21 @@ This workshop takes a **local-first** approach to LLM safety evaluation:
 
 ## Prerequisites
 
+**Participants (laptop):**
 - Python 3.12+, `uv` (`brew install uv`)
-- `oc` CLI — only needed for Section 04
 - OpenRouter free API key → https://openrouter.ai/keys
+- `oc` CLI — only needed for Section 04
 - Workshop cluster credentials (from facilitator) — only needed for Section 04
+
+**Cluster (facilitator runs `setup/platform-setup.sh` before the event):**
+- RHOAI 3.4+ with TrustyAI component (`Managed`)
+- `EvalHub` CR in `redhat-ods-applications` (for RHOAI Dashboard BFF)
+- `EvalHub` CR in `workshop-eval` (for participant evaluation jobs)
+- Namespace labels: `opendatahub.io/dashboard=true` + `evalhub.trustyai.opendatahub.io/tenant=true`
+- DSC `permitOnline: allow` (for HuggingFace dataset downloads in LMEvalJobs)
+- `evalhub-evaluator` Role + bindings in `workshop-eval`
+- `evalhub-cr-reader` Role in `redhat-ods-applications`
+- `openrouter-credentials` Secret in `workshop-eval`
 
 ---
 

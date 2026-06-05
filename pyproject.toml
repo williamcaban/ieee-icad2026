@@ -21,7 +21,7 @@ dependencies = [
     # Shared — YAML config parsing in setup scripts
     "pyyaml>=6.0",
     "rich>=15.0.0",
-    "eval-hub-sdk[adapter,cli]>=0.4",
+    "eval-hub-sdk[adapter,cli,client]>=0.4",
     "lm-eval>=0.4",
     "eval-hub-server>=0.4",
 ]

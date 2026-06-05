@@ -2,15 +2,24 @@
 set -euo pipefail
 
 # =============================================================================
-# platform-setup.sh — Full workshop environment provisioning
-# Run this script as a cluster admin at least 24 hours before the workshop.
+# platform-setup.sh — Cluster provisioning for the IEEE ICAD 2026 workshop.
+#
+# Run as cluster-admin at least 24 hours before the workshop.
+# Idempotent: safe to run multiple times.
+#
+# What this script provisions:
+#   1. workshop-eval namespace with required labels
+#   2. EvalHub CR in workshop-eval (tenant namespace)
+#   3. EvalHub CR in redhat-ods-applications (for BFF UI discovery)
+#   4. evalhub-evaluator RBAC for participants in workshop-eval
+#   5. evalhub-cr-reader RBAC in redhat-ods-applications (for BFF)
+#   6. DSC permitOnline: allow (required for HuggingFace dataset downloads)
+#   7. OpenRouter credentials secret
+#   8. DataSciencePipelinesApplication (for Section 06 reference)
 # =============================================================================
 
 WORKSHOP_NAMESPACE="workshop-eval"
-MODEL_NAME="granite-3-2b"
-EVALHUB_VERSION="0.4.0"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Resolve workshop root from this script's location
+WORKSHOP_GROUP="workshop-participants"   # OpenShift group name for attendees
 WORKSHOP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSHOP_ENV_FILE="${WORKSHOP_ROOT}/.workshop-env"
 
@@ -24,275 +33,344 @@ fail()  { echo "[FAIL]  $*" >&2; exit 1; }
 # =============================================================================
 info "Step 1: Verifying prerequisites..."
 
-command -v oc >/dev/null 2>&1   || fail "oc CLI not found. Install OpenShift CLI from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/"
-command -v kubectl >/dev/null 2>&1 || fail "kubectl not found. Install from https://kubernetes.io/docs/tasks/tools/"
-command -v python3 >/dev/null 2>&1 || fail "python3 not found. Install Python 3.10+."
-command -v pip3 >/dev/null 2>&1    || fail "pip3 not found."
-command -v envsubst >/dev/null 2>&1 || fail "envsubst not found. Install gettext: brew install gettext or dnf install gettext."
-command -v jq >/dev/null 2>&1      || fail "jq not found. Install: brew install jq or dnf install jq."
+command -v oc     >/dev/null 2>&1 || fail "oc not found. Install from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/"
+command -v python3 >/dev/null 2>&1 || fail "python3 not found. Install Python 3.12+."
 
-# Verify cluster connectivity
-if ! oc whoami >/dev/null 2>&1; then
-  fail "Not logged in to OpenShift. Run: oc login <cluster-api> -u <user> -p <password>"
-fi
+oc whoami >/dev/null 2>&1 || fail "Not logged in. Run: oc login <cluster-api>"
 
 CLUSTER_USER=$(oc whoami)
 CLUSTER_API=$(oc whoami --show-server)
 info "Logged in as '${CLUSTER_USER}' to ${CLUSTER_API}"
 
-# Verify cluster admin
-if ! oc auth can-i create namespace --all-namespaces >/dev/null 2>&1; then
-  fail "User '${CLUSTER_USER}' does not have cluster-admin access. Cannot create namespaces."
-fi
+oc auth can-i create namespace --all-namespaces >/dev/null 2>&1 || \
+  fail "'${CLUSTER_USER}' is not cluster-admin."
+
+# Check RHOAI / TrustyAI operator is present
+oc get crd evalhubs.trustyai.opendatahub.io >/dev/null 2>&1 || \
+  fail "EvalHub CRD not found. Ensure RHOAI 3.4+ with TrustyAI component is installed."
 
 ok "Prerequisites verified."
 
 # =============================================================================
-# Step 2: Create workshop namespace
+# Step 2: Enable permitOnline in DSC (required for HuggingFace downloads)
 # =============================================================================
-info "Step 2: Creating namespace '${WORKSHOP_NAMESPACE}'..."
+info "Step 2: Enabling permitOnline in DataScienceCluster..."
 
-if oc get namespace "${WORKSHOP_NAMESPACE}" >/dev/null 2>&1; then
-  warn "Namespace '${WORKSHOP_NAMESPACE}' already exists. Skipping creation."
-else
+oc patch datasciencecluster default-dsc --type=merge \
+  -p '{"spec":{"components":{"trustyai":{"eval":{"lmeval":{"permitOnline":"allow"}}}}}}' \
+  >/dev/null 2>&1 && ok "DSC permitOnline set to allow." || \
+  warn "Could not patch DSC — check if default-dsc exists."
+
+# =============================================================================
+# Step 3: Create and label the workshop namespace
+# =============================================================================
+info "Step 3: Creating namespace '${WORKSHOP_NAMESPACE}'..."
+
+oc get namespace "${WORKSHOP_NAMESPACE}" >/dev/null 2>&1 || \
   oc create namespace "${WORKSHOP_NAMESPACE}"
-  ok "Namespace '${WORKSHOP_NAMESPACE}' created."
-fi
 
-# Label namespace for EvalHub operator watching
+# Required labels:
+#   opendatahub.io/dashboard=true          → namespace appears in RHOAI Dashboard
+#   evalhub.trustyai.opendatahub.io/tenant=true → operator provisions job SA/RBAC
 oc label namespace "${WORKSHOP_NAMESPACE}" \
-  evalhub.rhoai.redhat.com/managed=true \
+  opendatahub.io/dashboard=true \
+  "evalhub.trustyai.opendatahub.io/tenant=true" \
   workshop=icad2026 \
   --overwrite
 
-# =============================================================================
-# Step 3: Configure RBAC for workshop participants
-# =============================================================================
-info "Step 3: Configuring RBAC for workshop participants..."
+ok "Namespace '${WORKSHOP_NAMESPACE}' ready with required labels."
 
-oc apply -f - <<'RBAC_EOF'
+# =============================================================================
+# Step 4: Create workshop service account and RBAC in workshop-eval
+# =============================================================================
+info "Step 4: Configuring RBAC in '${WORKSHOP_NAMESPACE}'..."
+
+oc create sa workshop-sa -n "${WORKSHOP_NAMESPACE}" 2>/dev/null || true
+oc adm policy add-role-to-user admin -z workshop-sa -n "${WORKSHOP_NAMESPACE}" 2>/dev/null || true
+
+# evalhub-evaluator: grants access to all EvalHub virtual resources + LMEvalJobs
+oc apply -f - <<RBACEOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: workshop-participant
-  namespace: workshop-eval
+  name: evalhub-evaluator
+  namespace: ${WORKSHOP_NAMESPACE}
+  labels:
+    workshop: icad2026
 rules:
-  - apiGroups: ["evalhub.rhoai.redhat.com"]
-    resources: ["collections", "evalruns", "benchmarks"]
-    verbs: ["get", "list", "watch", "create", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["pods", "pods/log", "services", "configmaps"]
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["evaluations"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["collections"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["providers"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["lmevaljobs", "lmevaljobs/status"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["pipelines.kubeflow.org"]
-    resources: ["pipelineruns", "pipelines"]
-    verbs: ["get", "list", "watch", "create"]
+  - apiGroups: ["mlflow.kubeflow.org"]
+    resources: ["experiments"]
+    verbs: ["create", "get"]
+RBACEOF
+
+# Bind evalhub-evaluator to the workshop SA, the participant group, and any user
+oc apply -f - <<BINDEOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: workshop-sa-evalhub-access
+  namespace: ${WORKSHOP_NAMESPACE}
+  labels:
+    workshop: icad2026
+subjects:
+- kind: ServiceAccount
+  name: workshop-sa
+  namespace: ${WORKSHOP_NAMESPACE}
+roleRef:
+  kind: Role
+  name: evalhub-evaluator
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: workshop-participants-binding
-  namespace: workshop-eval
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: workshop-participant
+  name: workshop-group-evalhub-access
+  namespace: ${WORKSHOP_NAMESPACE}
+  labels:
+    workshop: icad2026
 subjects:
-  - kind: Group
-    name: workshop-participants
-    apiGroup: rbac.authorization.k8s.io
-RBAC_EOF
+- kind: Group
+  name: ${WORKSHOP_GROUP}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: evalhub-evaluator
+  apiGroup: rbac.authorization.k8s.io
+BINDEOF
 
-ok "RBAC configured."
+ok "RBAC configured in '${WORKSHOP_NAMESPACE}'."
 
 # =============================================================================
-# Step 4: Deploy EvalHub CR
+# Step 5: EvalHub in redhat-ods-applications (required for BFF URL discovery)
+#
+# The RHOAI Dashboard BFF lists evalhubs.trustyai.opendatahub.io in its own
+# namespace (redhat-ods-applications) to discover the EvalHub service URL.
+# Without this CR, the UI shows "Evaluations unavailable" for all users.
 # =============================================================================
-info "Step 4: Deploying EvalHub CR in namespace '${WORKSHOP_NAMESPACE}'..."
+info "Step 5: Deploying platform EvalHub in 'redhat-ods-applications'..."
 
-oc apply -f - <<'EVALHUB_CR_EOF'
-apiVersion: evalhub.rhoai.redhat.com/v1alpha1
+oc apply -f - <<PLATFORM_EVALHUB
+apiVersion: trustyai.opendatahub.io/v1alpha1
 kind: EvalHub
 metadata:
-  name: workshop-eval
-  namespace: workshop-eval
+  name: evalhub
+  namespace: redhat-ods-applications
 spec:
-  version: "0.4.0"
-  storage:
-    storageClass: "gp3-csi"
-    size: "50Gi"
-  benchmarkCatalog:
-    includeBuiltins: true
-  priorityClassName: "workshop-high"
-  resources:
-    requests:
-      cpu: "2"
-      memory: "4Gi"
-    limits:
-      cpu: "4"
-      memory: "8Gi"
-EVALHUB_CR_EOF
+  replicas: 1
+  providers:
+    - lm-evaluation-harness
+    - garak
+  collections:
+    - safety-and-fairness-v1
+    - toxicity-and-ethical-principles
+    - leaderboard-v2
+  database:
+    type: sqlite
+    maxIdleConns: 5
+    maxOpenConns: 25
+PLATFORM_EVALHUB
 
-info "Waiting for EvalHub CR to become ready (timeout: 5 minutes)..."
-timeout=300
-elapsed=0
-while true; do
-  ready=$(oc get evalhub workshop-eval -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.status.ready}' 2>/dev/null || echo "false")
-  if [[ "${ready}" == "true" ]]; then
-    ok "EvalHub CR is Ready."
-    break
-  fi
-  if [[ ${elapsed} -ge ${timeout} ]]; then
-    fail "EvalHub CR did not become ready within ${timeout}s. Check: oc describe evalhub workshop-eval -n ${WORKSHOP_NAMESPACE}"
-  fi
-  info "EvalHub not ready yet (${elapsed}s elapsed). Waiting..."
-  sleep 15
-  elapsed=$((elapsed + 15))
-done
+ok "Platform EvalHub CR applied in 'redhat-ods-applications'."
 
 # =============================================================================
-# Step 5: Deploy model serving endpoint (granite-3-2b via vLLM)
+# Step 6: EvalHub in workshop-eval (tenant instance for participant evaluations)
 # =============================================================================
-info "Step 5: Deploying ${MODEL_NAME} model serving endpoint..."
+info "Step 6: Deploying tenant EvalHub in '${WORKSHOP_NAMESPACE}'..."
 
-oc apply -f - <<'MODEL_EOF'
-apiVersion: serving.kserve.io/v1beta1
-kind: InferenceService
+oc apply -f - <<TENANT_EVALHUB
+apiVersion: trustyai.opendatahub.io/v1alpha1
+kind: EvalHub
 metadata:
-  name: granite-3-2b
-  namespace: workshop-eval
+  name: workshop-evalhub
+  namespace: ${WORKSHOP_NAMESPACE}
   labels:
-    app: granite-3-2b
     workshop: icad2026
-  annotations:
-    serving.kserve.io/deploymentMode: RawDeployment
 spec:
-  predictor:
-    model:
-      modelFormat:
-        name: vLLM
-      runtime: vllm-runtime
-      storageUri: "hf://ibm-granite/granite-3.2-2b-instruct"
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: "1"
-        limits:
-          cpu: "8"
-          memory: "24Gi"
-          nvidia.com/gpu: "1"
-      args:
-        - "--max-model-len=4096"
-        - "--max-num-seqs=16"
-        - "--dtype=bfloat16"
-MODEL_EOF
+  replicas: 1
+  providers:
+    - lm-evaluation-harness
+    - garak
+  collections:
+    - safety-and-fairness-v1
+    - toxicity-and-ethical-principles
+  database:
+    type: sqlite
+    maxIdleConns: 5
+    maxOpenConns: 25
+TENANT_EVALHUB
 
-info "Waiting for InferenceService to become ready (timeout: 10 minutes)..."
-timeout=600
-elapsed=0
-while true; do
-  ready=$(oc get inferenceservice granite-3-2b -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
-  if [[ "${ready}" == "True" ]]; then
-    ok "InferenceService granite-3-2b is Ready."
-    break
-  fi
-  if [[ ${elapsed} -ge ${timeout} ]]; then
-    fail "InferenceService did not become ready within ${timeout}s. Check: oc describe inferenceservice granite-3-2b -n ${WORKSHOP_NAMESPACE}"
-  fi
-  info "InferenceService not ready yet (${elapsed}s elapsed). Waiting..."
-  sleep 20
-  elapsed=$((elapsed + 20))
+info "Waiting for tenant EvalHub to become Ready..."
+for i in $(seq 1 24); do
+  sleep 5
+  PHASE=$(oc get evalhub workshop-evalhub -n "${WORKSHOP_NAMESPACE}" \
+    -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+  [[ "${PHASE}" == "Ready" ]] && { ok "Tenant EvalHub is Ready."; break; }
+  [[ "${i}" == "24" ]] && warn "Tenant EvalHub not Ready after 120s. Check: oc describe evalhub workshop-evalhub -n ${WORKSHOP_NAMESPACE}"
 done
 
 # =============================================================================
-# Step 6: Retrieve endpoints and write workshop-env file
+# Step 7: RBAC for BFF URL discovery in redhat-ods-applications
+#
+# The BFF uses the participant's token to list evalhubs.trustyai.opendatahub.io
+# in redhat-ods-applications. Participants need get/list on evalhubs there.
 # =============================================================================
-info "Step 6: Retrieving endpoints and writing ${WORKSHOP_ENV_FILE}..."
+info "Step 7: Configuring BFF discovery RBAC in 'redhat-ods-applications'..."
 
-EVALHUB_ROUTE=$(oc get route evalhub-api -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-if [[ -z "${EVALHUB_ROUTE}" ]]; then
-  # Try service route annotation
-  EVALHUB_ROUTE=$(oc get svc evalhub-api -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.metadata.annotations.route\.openshift\.io/hostname}' 2>/dev/null || echo "")
-fi
-if [[ -z "${EVALHUB_ROUTE}" ]]; then
-  warn "Could not auto-detect EvalHub route. Setting placeholder — update manually."
-  EVALHUB_ROUTE="evalhub-api-workshop-eval.apps.$(oc get infrastructure cluster -o jsonpath='{.status.etcdDiscoveryDomain}' 2>/dev/null || echo 'cluster.example.com')"
+oc apply -f - <<BFF_RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: evalhub-cr-reader
+  namespace: redhat-ods-applications
+  labels:
+    workshop: icad2026
+rules:
+- apiGroups: ["trustyai.opendatahub.io"]
+  resources: ["evalhubs"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: workshop-group-evalhub-cr-reader
+  namespace: redhat-ods-applications
+  labels:
+    workshop: icad2026
+subjects:
+- kind: Group
+  name: ${WORKSHOP_GROUP}
+  apiGroup: rbac.authorization.k8s.io
+- kind: ServiceAccount
+  name: workshop-sa
+  namespace: ${WORKSHOP_NAMESPACE}
+roleRef:
+  kind: Role
+  name: evalhub-cr-reader
+  apiGroup: rbac.authorization.k8s.io
+BFF_RBAC
+
+ok "BFF discovery RBAC configured."
+
+# =============================================================================
+# Step 8: OpenRouter credentials secret
+# =============================================================================
+info "Step 8: Creating OpenRouter credentials secret..."
+
+OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
+if [[ -z "${OPENROUTER_API_KEY}" || "${OPENROUTER_API_KEY}" == *"REPLACE"* ]]; then
+  warn "OPENROUTER_API_KEY is not set in environment."
+  warn "Set it and re-run, or participants can create it themselves:"
+  warn "  oc create secret generic openrouter-credentials \\"
+  warn "    -n ${WORKSHOP_NAMESPACE} \\"
+  warn "    --from-literal=OPENROUTER_API_KEY=<key>"
+else
+  oc create secret generic openrouter-credentials \
+    -n "${WORKSHOP_NAMESPACE}" \
+    --from-literal=OPENROUTER_API_KEY="${OPENROUTER_API_KEY}" \
+    --dry-run=client -o yaml | oc apply -f - >/dev/null
+  ok "openrouter-credentials secret ready in '${WORKSHOP_NAMESPACE}'."
 fi
 
-MODEL_ROUTE=$(oc get inferenceservice granite-3-2b -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.status.url}' 2>/dev/null || echo "")
-if [[ -z "${MODEL_ROUTE}" ]]; then
-  warn "Could not auto-detect model route. Setting placeholder — update manually."
-  MODEL_ROUTE="https://granite-3-2b-workshop-eval.apps.cluster.example.com"
-fi
+# =============================================================================
+# Step 9: DataSciencePipelinesApplication (for Section 06 pipeline reference)
+# =============================================================================
+info "Step 9: Deploying DataSciencePipelinesApplication..."
 
-KFP_ROUTE=$(oc get route ds-pipeline-ui -n "${WORKSHOP_NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-if [[ -z "${KFP_ROUTE}" ]]; then
-  KFP_ROUTE=$(oc get route ds-pipeline-ui -n redhat-ods-applications -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-fi
-if [[ -z "${KFP_ROUTE}" ]]; then
-  warn "Could not auto-detect KFP route. Setting placeholder."
-  KFP_ROUTE="ds-pipeline-ui-workshop-eval.apps.cluster.example.com"
-fi
+oc apply -f - <<DSPA
+apiVersion: datasciencepipelinesapplications.opendatahub.io/v1
+kind: DataSciencePipelinesApplication
+metadata:
+  name: dspa-workshop
+  namespace: ${WORKSHOP_NAMESPACE}
+spec:
+  apiServer:
+    deploy: true
+    enableSamplePipeline: false
+  database:
+    disableHealthCheck: false
+    mariaDB:
+      deploy: true
+      pipelineDBName: mlpipeline
+      username: mlpipeline
+  objectStorage:
+    disableHealthCheck: false
+    minio:
+      deploy: true
+      image: quay.io/opendatahub/minio:RELEASE.2019-08-14T20-37-41Z-license-compliance
+DSPA
 
-# Retrieve service account token for EvalHub API authentication
-EVALHUB_TOKEN=$(oc create token workshop-sa -n "${WORKSHOP_NAMESPACE}" --duration=24h 2>/dev/null || echo "")
-if [[ -z "${EVALHUB_TOKEN}" ]]; then
-  # Create service account if it doesn't exist
-  oc create serviceaccount workshop-sa -n "${WORKSHOP_NAMESPACE}" 2>/dev/null || true
-  EVALHUB_TOKEN=$(oc create token workshop-sa -n "${WORKSHOP_NAMESPACE}" --duration=24h 2>/dev/null || echo "PLACEHOLDER_TOKEN")
-fi
+ok "DataSciencePipelinesApplication applied."
+
+# =============================================================================
+# Step 10: Generate .workshop-env with live endpoints
+# =============================================================================
+info "Step 10: Writing ${WORKSHOP_ENV_FILE}..."
+
+EVALHUB_ROUTE=$(oc get route workshop-evalhub -n "${WORKSHOP_NAMESPACE}" \
+  -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+KFP_ROUTE=$(oc get route ds-pipeline-dspa-workshop -n "${WORKSHOP_NAMESPACE}" \
+  -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+WORKSHOP_TOKEN=$(oc create token workshop-sa -n "${WORKSHOP_NAMESPACE}" \
+  --duration=24h 2>/dev/null || echo "")
+DASHBOARD_ROUTE=$(oc get route rhods-dashboard -n redhat-ods-applications \
+  -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
 
 cat > "${WORKSHOP_ENV_FILE}" <<ENVEOF
-# Workshop environment variables — IEEE ICAD 2026
-# Generated by platform-setup.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)
-# Source this file before running workshop exercises: source .workshop-env (in workshop root)
+# IEEE ICAD 2026 Workshop — environment variables
+# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+# Source before each session: source .workshop-env
 
-export WORKSHOP_NAMESPACE="workshop-eval"
-export EVALHUB_ENDPOINT="https://${EVALHUB_ROUTE}"
-export MODEL_ENDPOINT="${MODEL_ROUTE}"
-export KFP_ENDPOINT="https://${KFP_ROUTE}"
-export EVALHUB_TOKEN="${EVALHUB_TOKEN}"
+export WORKSHOP_NAMESPACE="${WORKSHOP_NAMESPACE}"
 
-# Convenience aliases
-alias evalhub-ns="kubectl config set-context --current --namespace=workshop-eval"
+# EvalHub — cluster tenant instance
+export EVALHUB_ENDPOINT="${EVALHUB_ROUTE:+https://${EVALHUB_ROUTE}}"
+export EVALHUB_TOKEN="${WORKSHOP_TOKEN}"
+export EVALHUB_CLUSTER_ENDPOINT="${EVALHUB_ROUTE:+https://${EVALHUB_ROUTE}}"
+
+# OpenRouter — free OpenAI-compatible inference API
+export MODEL_ENDPOINT="https://openrouter.ai/api/v1"
+export MODEL_NAME_A="liquid/lfm-2.5-1.2b-instruct:free"
+export MODEL_NAME_B="meta-llama/llama-3.3-70b-instruct:free"
+export MODEL_NAME="\${MODEL_NAME_A}"
+export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-sk-or-v1-REPLACE-WITH-YOUR-KEY}"
+
+# KubeFlow Pipelines (for Section reference)
+export KFP_ENDPOINT="${KFP_ROUTE:+https://${KFP_ROUTE}}"
+
+# RHOAI Dashboard
+export RHOAI_DASHBOARD="${DASHBOARD_ROUTE:+https://${DASHBOARD_ROUTE}}"
+
+# Local eval-hub-server (started by 01-setup/setup.sh)
+export EVALHUB_LOCAL_PORT="18080"
 ENVEOF
 
 chmod 600 "${WORKSHOP_ENV_FILE}"
 ok "Workshop environment file written to ${WORKSHOP_ENV_FILE}"
 
 # =============================================================================
-# Step 7: Smoke test
-# =============================================================================
-info "Step 7: Running smoke tests..."
-
-source "${WORKSHOP_ENV_FILE}"
-
-# Test EvalHub API
-if curl -sf -H "Authorization: Bearer ${EVALHUB_TOKEN}" "${EVALHUB_ENDPOINT}/api/v1/collections" >/dev/null 2>&1; then
-  ok "EvalHub API smoke test: PASS"
-else
-  warn "EvalHub API smoke test: FAIL — endpoint may still be initializing. Re-run verify-environment.sh."
-fi
-
-# Test model endpoint
-if curl -sf "${MODEL_ENDPOINT}/v1/health" >/dev/null 2>&1; then
-  ok "Model endpoint smoke test: PASS"
-else
-  warn "Model endpoint smoke test: FAIL — model may still be loading. Re-run verify-environment.sh."
-fi
-
-# =============================================================================
 # Done
 # =============================================================================
 echo ""
 echo "============================================================"
-echo "  Workshop environment provisioning complete!"
-echo "  Namespace:       ${WORKSHOP_NAMESPACE}"
-echo "  EvalHub:         ${EVALHUB_ENDPOINT}"
-echo "  Model endpoint:  ${MODEL_ENDPOINT}"
-echo "  KFP:             ${KFP_ENDPOINT}"
-echo "  Env file:        ${WORKSHOP_ENV_FILE}"
+echo "  Cluster provisioning complete."
 echo ""
-echo "  Run verify-environment.sh before the workshop to confirm"
-echo "  all checks pass."
+echo "  Workshop namespace:  ${WORKSHOP_NAMESPACE}"
+[[ -n "${EVALHUB_ROUTE}" ]] && echo "  Tenant EvalHub:     https://${EVALHUB_ROUTE}"
+[[ -n "${DASHBOARD_ROUTE}" ]] && echo "  RHOAI Dashboard:    https://${DASHBOARD_ROUTE}"
+echo "  Env file:           ${WORKSHOP_ENV_FILE}"
+echo ""
+echo "  Next: run verify-environment.sh to confirm all checks pass."
+echo "  Share ${WORKSHOP_ENV_FILE} with participants (after setting API key)."
 echo "============================================================"

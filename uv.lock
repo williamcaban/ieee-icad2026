@@ -713,6 +713,9 @@ cli = [
     { name = "pyyaml" },
     { name = "rich" },
 ]
+client = [
+    { name = "httpx" },
+]
 
 [[package]]
 name = "eval-hub-server"
@@ -1425,7 +1428,7 @@ name = "ieee-icad2026-workshop"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "eval-hub-sdk", extra = ["adapter", "cli"] },
+    { name = "eval-hub-sdk", extra = ["adapter", "cli", "client"] },
     { name = "eval-hub-server" },
     { name = "garak" },
     { name = "kfp" },
@@ -1447,7 +1450,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "eval-hub-sdk", extras = ["adapter", "cli"], specifier = ">=0.4" },
+    { name = "eval-hub-sdk", extras = ["adapter", "cli", "client"], specifier = ">=0.4" },
     { name = "eval-hub-server", specifier = ">=0.4" },
     { name = "garak", specifier = ">=0.9" },
     { name = "ipython", marker = "extra == 'dev'", specifier = ">=8.0" },
