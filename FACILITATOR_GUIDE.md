@@ -5,17 +5,22 @@
 
 ---
 
-## Quick Reference
+## Quick Reference — 105 minutes
 
-| Duration | Section | Key output |
-|----------|---------|------------|
-| 10 min | Opening presentation | Context set; three-act arc established |
-| 12 min | 01 Setup | `eval-hub-server` running; `evalhub-mcp` installed |
-| 22 min | Act 1 — Baseline Replication | `baseline_summary.json`; bias + adversarial scores in EvalHub |
-| 10 min | Break + Q&A | Verify MCP server; field concept questions |
-| 18 min | Act 2 — Novel Contribution | IRR benchmark registered; `novel_results.json` |
-| 23 min | Act 3 — MCP Research Interface | `comparison_plot.png`; `comparison_report.json` |
-| 10 min | Closing discussion | Kubernetes demo (pre-recorded); research checklist; Q&A |
+| Start | Dur | Section | Key output |
+|-------|-----|---------|------------|
+| 0:00 | 10 min | **Opening presentation** | Context set; three-act arc + EvalHub + guardrails framing |
+| 0:10 | 12 min | **01 — Setup** | `eval-hub-server` running; providers registered; `evalhub-mcp` installed |
+| 0:22 | 14 min | **02 — Act 1 Track A** (BBQ + MMLU) | Bias scores in EvalHub; `baseline_summary.json` |
+| 0:36 | 8 min | **02 — Act 1 Track B** (Garak) + **Guardrails Demo** | Adversarial probe baseline; NeMo Guardrails proxy running; guarded run compared |
+| 0:44 | 10 min | **Break + Q&A** | MCP server verified; questions fielded |
+| 0:54 | 18 min | **03 — Act 2: Novel Contribution** | IRR benchmark registered; `novel_results.json` |
+| 1:12 | 23 min | **04 — Act 3: MCP Research Interface** | `comparison_plot.png`; `comparison_report.json` |
+| 1:35 | 10 min | **Closing Discussion** | Kubernetes demo (pre-recorded); research checklist; Q&A |
+
+> **Guardrails timing note:** The 8-minute guardrails demo is embedded in Act 1 Track B — start Garak running, then demo the guardrail proxy while Garak executes, and re-run the probe against the guarded endpoint as Garak finishes. If the room is behind, facilitate the demo as a live presenter walkthrough (3 min) rather than participant hands-on.
+
+> **Act 3 status:** `04-mcp-compare/` lab files are in progress. Until available, present the Act 3 slides and walk through the MCP notebook concept as a facilitator demo. Participants can follow along with the slides.
 
 ---
 
@@ -30,8 +35,8 @@
 - [ ] Confirm `evalhub health` returns `{"status": "healthy"}`
 - [ ] Confirm `evalhub providers list` shows `lm_evaluation_harness` and `garak`
 - [ ] Test a real eval: `evalhub eval run --provider lm_evaluation_harness --benchmark bbq_generate --param limit=2 --wait`
-- [ ] Verify `evalhub-mcp --version` works
-- [ ] Run `bash 04-mcp-compare/setup.sh` and verify `curl http://localhost:3001/health` responds
+- [ ] Verify `evalhub-mcp --version` works (installed by `01-setup/setup.sh`, or `brew install eval-hub/evalhub/evalhub-mcp`)
+- [ ] Start `evalhub-mcp` manually and verify `curl http://localhost:3001/health` responds (see Act 3 MCP server pre-flight below)
 - [ ] Run `uv run pytest tests/ -v` — all unit tests should pass; smoke tests may skip if HF offline
 
 ### Pre-recorded Kubernetes demo
@@ -77,17 +82,21 @@ Slides: `slides/00-opening.md`
 
 ### Delivery notes by slide
 
-**Slide 2 — Production failures:** Do not rush this. Ask: "Has anyone seen a model behave differently in production than during evaluation?" Wait for one or two responses. These personal anecdotes set the stage for why the session exists.
+**Slides 1–2 (Title, Quote):** Set tone. 30–60 seconds each.
 
-**Slide 3 — Industry scope:** Emphasise that the HELM finding (11/30 models with hidden demographic bias) used _aggregate_ scores that looked acceptable. The problem isn't that researchers don't evaluate — it's that aggregate scores hide subgroup failures.
+**Slide 3 — Production failures (3 columns):** Ask: "Has anyone seen a model behave differently in production than during evaluation?" Wait for one or two responses before moving on.
 
-**Slide 4 — Replicability:** The conceptual pivot for a research audience. Key line: "If you can't reproduce the baseline, you have no baseline — you have a claim." Give this a beat.
+**Slide 4–5 — HELM stat + Regulatory scope:** Emphasise that aggregate scores hide subgroup failures, and that regulators now require reproducible evidence — not one-time snapshots.
 
-**Slide 5 — Researcher's dilemma:** Frame the three-act structure as what the participant would personally need to do to publish a novel safety benchmark. This is not a tutorial — it is a research workflow they are executing.
+**Slide 6 — Replicability:** Key line: "If you can't reproduce the baseline, you have no baseline — you have a claim." Give this a beat.
 
-**Slide 8 — Architecture:** Emphasise "no cluster" explicitly. Many participants will be relieved. The Kubernetes mention is forward context only. Say: "We have a pre-recorded demo of the cluster workflow for the closing segment. Today is entirely local."
+**Slide 7 — Researcher's dilemma:** Frame as what participants would personally need to do to publish a novel safety benchmark. This is not a tutorial — it is a research workflow they are executing.
 
-**Slide 10 — Start Section 01:** Give participants 30 seconds to open a terminal before moving on.
+**Slides 8–11 (EvalHub, Guardrails, Collections, Pass/Fail):** Move through these at pace — they introduce the platform. Participants will experience the concepts hands-on. Spend extra time on the Guardrails slides; they explain the workshop title.
+
+**Slides 13–14 (Architecture + Kubernetes):** Emphasise "no cluster today." Say: "We have a pre-recorded demo of the cluster workflow for the closing segment. Today is entirely local."
+
+**Slide 16 — Start Section 01:** Give participants 30 seconds to open a terminal before moving on.
 
 ---
 
@@ -151,14 +160,47 @@ If participants see `429 Too Many Requests`:
 
 ---
 
+## Guardrails Demo — embedded in Act 1 Track B (8 min)
+
+Slides: none (live walkthrough)  
+Lab: `guardrails/lab.md`
+
+Run this immediately after or alongside Garak Track B. The Garak evaluation takes 3–5 minutes — start the guardrail proxy while it runs.
+
+### Timing within the 8-minute window
+
+| Step | Duration |
+|------|----------|
+| Start NeMo Guardrails proxy (`bash guardrails/setup.sh`) | 2 min (includes install if needed) |
+| Test PII rail with `curl` — show blocked response | 1 min |
+| Re-run the same Garak probe against `$GUARDED_ENDPOINT` | 3 min |
+| Compare bare vs guarded result in EvalHub | 2 min |
+
+### Key teaching moment
+
+> "In Act 1 we found a vulnerability. We added guardrails. Now we're running the exact same systematic probe against the guarded endpoint. This is 'Guardrails Under Pressure' — not adding guardrails and hoping, but *evaluating* them with the same tool that found the problem."
+
+### If behind on time
+
+Collapse to a 3-minute facilitator demo: start the proxy, run one `curl` PII test live, show the blocked response. Participants can run `bash guardrails/setup.sh` independently and follow `guardrails/lab.md` during the break.
+
+### Recovery
+
+| Problem | Recovery |
+|---------|---------|
+| `nemoguardrails` install slow | Pre-install: `uv pip install "nemoguardrails>=0.9"` before the session |
+| Port 18090 in use | `bash guardrails/reset.sh` then re-run `bash guardrails/setup.sh` |
+| Garak probe still passes through guardrail | Check `GUARDED_ENDPOINT` is set to `:18090`, not `:18080` |
+
+---
+
 ## Break (10 min)
 
 During the break:
 - [ ] Verify `evalhub health` — server still healthy
-- [ ] Verify `curl -s http://localhost:3001/health` — MCP server responding  
-  If not: `bash 04-mcp-compare/setup.sh` to restart it
+- [ ] Verify `evalhub-mcp` is available for Act 3: `evalhub-mcp --version`
 - [ ] Field any architecture or concept questions
-- [ ] Confirm that participants who fell behind have at least started Track A
+- [ ] Confirm participants who fell behind have at least finished Track A BBQ scores
 
 ---
 
@@ -209,7 +251,7 @@ evalhub benchmarks list    # should show icad2026-irr-safety
 ## Act 3 — MCP Research Interface (23 min)
 
 Slides: `slides/04-mcp-slides.md`  
-Lab: `04-mcp-compare/lab.md`
+Lab: `04-mcp-compare/lab.md` *(section in progress — use slides as primary guide)*
 
 ### Timing guide
 
@@ -242,24 +284,39 @@ Both are provided. Participants choose whichever fits their workflow.
 
 ### MCP server pre-flight
 
-Before Act 3 starts, verify the MCP server is still running:
+Before Act 3 starts, verify `evalhub-mcp` is available:
 
 ```bash
-curl http://localhost:3001/health
-# Expected: {"status": "ok", "tools": ["submit_evaluation", "get_job_status", "cancel_job"]}
+evalhub-mcp --version
+# If not installed: brew install eval-hub/evalhub/evalhub-mcp
 ```
 
-If it's not running: `bash 04-mcp-compare/setup.sh`
+Start it pointing at the local eval-hub-server:
+
+```bash
+# Create local config and start (from repo root)
+mkdir -p ~/.evalhub
+cat > ~/.evalhub/mcp-local.yaml <<EOF
+base_url: "http://localhost:18080"
+token: ""
+tenant: "workshop"
+transport: "http"
+host: "localhost"
+port: 3001
+EOF
+evalhub-mcp --config ~/.evalhub/mcp-local.yaml &
+curl http://localhost:3001/health
+```
 
 ### Recovery
 
 | Problem | Recovery |
 |---------|---------|
-| MCP server not responding | `bash 04-mcp-compare/setup.sh`; verify with `curl` |
+| `evalhub-mcp` not found | `brew install eval-hub/evalhub/evalhub-mcp` or download from GitHub releases |
+| MCP server not responding | Re-run the start commands above; check port 3001 is free |
 | `icad2026-irr-safety` not found | Participant skipped Act 2 — run `cd 03-irr-local && python3 scripts/register_benchmark.py` |
-| Job stuck in RUNNING | `mcp.cancel_job(job_id)` in notebook; resubmit |
 | `matplotlib` import fails | `uv sync` in repo root |
-| Jupyter not found | Use `compare_approaches.py` instead |
+| `04-mcp-compare/` files not available | Present from slides; participants follow along with `slides/04-mcp-slides.md` |
 
 ---
 
