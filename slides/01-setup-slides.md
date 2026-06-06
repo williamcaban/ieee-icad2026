@@ -3,7 +3,7 @@ marp: true
 theme: uncover
 paginate: true
 style: |
-  section { background: #0f0f1a; color: #e8e8e8; font-family: 'Red Hat Text', sans-serif; padding: 48px 64px; }
+  section { background: #0f0f1a; color: #e8e8e8; font-family: 'Red Hat Text', sans-serif; font-size: 28px; padding: 48px 64px; }
   h1 { color: #ee0000; } h2 { color: #f5a623; }
   code { background: #1e1e2e; color: #cdd6f4; padding: 2px 6px; border-radius: 4px; }
   pre { background: #1e1e2e; border-left: 4px solid #ee0000; padding: 16px; }

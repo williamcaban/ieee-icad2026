@@ -33,6 +33,12 @@ dev = [
     "pytest>=7.0",
     "ipython>=8.0",
 ]
+guardrails = [
+    # Guardrails demo — install separately to avoid heavy deps in core env:
+    #   uv pip install "ieee-icad2026-workshop[guardrails]"
+    # or let guardrails/setup.sh install it automatically.
+    "nemoguardrails>=0.9",
+]
 
 [tool.uv]
 # Don't install this repo as a Python package — it's a scripts-only workshop.
