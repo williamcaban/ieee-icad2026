@@ -30,7 +30,7 @@ style: |
 
 ### Replicating Baselines · Validating Novel Benchmarks · Comparing at Scale
 
-<p class="meta">IEEE ICAD 2026 Workshop · 105 minutes · Hands-on · All local — no cluster required</p>
+<p class="meta">IEEE ICAD 2026 Workshop · Hands-on · All local — no cluster required</p>
 
 ---
 
@@ -130,7 +130,7 @@ A new research group has a novel safety benchmark methodology — more reliable 
 <div class="callout">
 
 **Replicate → Contribute → Compare.**  
-Today you do all three, with a real model, in 105 minutes.
+Today you do all three, with a real model.
 
 </div>
 
@@ -361,7 +361,7 @@ Only one line changes: `evalhub config set base_url <cluster-url>`
 ---
 
 <!-- Slide 15: Ground rules -->
-## Ground Rules — 105 Minutes
+## Ground Rules
 
 ✅ Every command is in `lab.md` — copy-paste is the intended workflow  
 ✅ Every expected output is shown — troubleshooting section included  

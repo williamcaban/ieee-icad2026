@@ -1,49 +1,58 @@
-# Guardrails Under Pressure: Hands-On LLM Safety Evaluation from Bias Detection to Red-Team Attacks
+# Guardrails Under Pressure
 
-**IEEE ICAD 2026 Workshop** | 90 minutes | Red Hat OpenShift AI (RHOAI) + Laptop
+### Replicating Baselines · Validating Novel Benchmarks · Comparing at Scale
+
+**IEEE ICAD 2026 Workshop** · 105 minutes · Hands-on · All local — no cluster required
 
 ---
 
 ## Overview
 
-This workshop takes a **local-first** approach to LLM safety evaluation:
+This workshop takes researchers through a three-act evaluation methodology using [EvalHub](https://eval-hub.github.io) as the unified evaluation platform:
 
-- **Sections 01–03 use a local `eval-hub-server`** — Section 01 starts `eval-hub-server` on `localhost:18080`. Sections 02–03 use the same `evalhub` CLI against it. lm-eval and garak run as local subprocesses calling OpenRouter for inference. No Kubernetes access required.
-- **Section 04 moves to the cluster** — EvalHub on RHOAI orchestrates LMEvalJobs, stores results, and produces auditable governance artifacts.
+- **Act 1 — Replicate Baselines**: Run established safety benchmarks (BBQ bias, MMLU ethics, Garak adversarial probes) to lock a reproducible baseline before claiming novelty.
+- **Guardrails Demo**: Add a NeMo Guardrails proxy, re-run the same Garak probes — put the guardrails under the same pressure that found the original vulnerability.
+- **Act 2 — Novel Contribution**: Compute Inter-Rater Reliability on your annotation dataset, register your novel benchmark in EvalHub alongside the baseline.
+- **Act 3 — MCP Comparison**: A self-contained Python/Jupyter notebook calls the EvalHub MCP server directly via `requests` — no framework — to compare both approaches and produce a publication-ready figure.
+
+Everything runs on your laptop. No Kubernetes cluster is required for the hands-on sections. A pre-recorded demo shows the same workflow at cluster scale in the closing segment.
 
 ---
 
 ## Agenda
 
-| # | Section | Time | Runs On |
+| # | Section | Time | Runs on |
 |---|---------|------|---------|
-| — | Opening Presentation | 8 min | — |
-| 01 | Environment Setup | 10 min | Laptop |
-| 02 | Local Evaluation: lm-eval + Garak | 20 min | Laptop → OpenRouter |
-| — | Break + Q&A | 8 min | — |
-| 03 | IRR/IAA Benchmark (local) | 12 min | Laptop |
-| 04 | Kubernetes: EvalHub + Custom Benchmarks + Governance | 22 min | Cluster |
+| — | Opening Presentation | 10 min | — |
+| 01 | Environment Setup | 12 min | Laptop |
+| 02 | Act 1 — Baseline Replication | 22 min | Laptop → model endpoint |
+| — | Guardrails Demo | 8 min | Laptop |
+| — | Break + Q&A | 10 min | — |
+| 03 | Act 2 — Novel Contribution (IRR) | 18 min | Laptop |
+| 04 | Act 3 — MCP Comparison | 23 min | Laptop |
 | — | Closing Discussion | 10 min | — |
 
 ---
 
 ## Prerequisites
 
-**Participants (laptop):**
-- Python 3.12+, `uv` (`brew install uv`)
-- OpenRouter free API key → https://openrouter.ai/keys
-- `oc` CLI — only needed for Section 04
-- Workshop cluster credentials (from facilitator) — only needed for Section 04
+**Python and tooling:**
 
-**Cluster (facilitator runs `setup/platform-setup.sh` before the event):**
-- RHOAI 3.4+ with TrustyAI component (`Managed`)
-- `EvalHub` CR in `redhat-ods-applications` (for RHOAI Dashboard BFF)
-- `EvalHub` CR in `workshop-eval` (for participant evaluation jobs)
-- Namespace labels: `opendatahub.io/dashboard=true` + `evalhub.trustyai.opendatahub.io/tenant=true`
-- DSC `permitOnline: allow` (for HuggingFace dataset downloads in LMEvalJobs)
-- `evalhub-evaluator` Role + bindings in `workshop-eval`
-- `evalhub-cr-reader` Role in `redhat-ods-applications`
-- `openrouter-credentials` Secret in `workshop-eval`
+```bash
+# Python 3.12+ and uv required
+brew install uv          # macOS
+# or: pip install uv
+```
+
+**Model endpoint — choose one:**
+
+| Option | Notes |
+|--------|-------|
+| **OpenRouter** (recommended) | Free tier — get a key at [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **Ollama** (local, no API key) | `ollama pull llama3.2:3b && ollama serve` |
+| **vLLM** (local/institutional) | Any OpenAI-compatible endpoint |
+
+No `oc` CLI. No cluster credentials. No Docker required.
 
 ---
 
@@ -55,13 +64,11 @@ cd ieee-icad2026
 
 # Install all dependencies
 uv sync
-
-# Activate virtual environment
 source .venv/bin/activate
 
-# Configure your environment
+# Configure your model endpoint
 cp .workshop-env.example .workshop-env
-# Edit .workshop-env — set OPENROUTER_API_KEY
+# Edit .workshop-env — uncomment your model endpoint option and set your API key
 
 # Start Section 01
 cd 01-setup && bash setup.sh
@@ -73,74 +80,144 @@ cd 01-setup && bash setup.sh
 
 ```
 .
-├── pyproject.toml               # uv-managed dependencies
+├── pyproject.toml               # uv-managed dependencies (pinned)
 ├── uv.lock                      # locked versions
-├── .workshop-env.example        # credential template
+├── .workshop-env.example        # credential template — 3 endpoint options
 │
-├── 01-setup/                    #  10 min │ Laptop only
-├── 02-local-evaluation/         #  20 min │ Laptop → OpenRouter
-│   ├── configs/garak-local.yaml
-│   └── configs/lmeval-local.yaml
-├── 03-irr-local/                #  12 min │ Laptop only
-│   ├── data/annotations-sample.csv
-│   └── scripts/{compute_irr,register_benchmark}.py
-├── 04-kubernetes/               #  22 min │ Cluster (RHOAI + EvalHub)
-│   └── configs/{eval-run,custom-safety-collection}.yaml
+├── 01-setup/                    # 12 min │ Start eval-hub-server + install evalhub-mcp
+├── 02-local-evaluation/         # 22 min │ Act 1: BBQ + MMLU + Garak baselines
+│   └── configs/
+├── guardrails/                  # ~8 min │ NeMo Guardrails demo (after Act 1 Garak)
+│   └── config/rails.co          #         Two Colang rules: PII + jailbreak
+├── 03-irr-local/                # 18 min │ Act 2: IRR computation + benchmark registration
+│   └── data/annotations-sample.csv
+├── 04-mcp-compare/              # 23 min │ Act 3: Jupyter/Python MCP comparison notebook
 │
-├── resources/
-│   ├── owasp-llm-top10-quick-ref.md
-│   ├── avid-taxonomy-quick-ref.md
-│   ├── cwe-garak-mapping.md
-│   ├── governance-checklist.md
-│   └── kubeflow-pipeline-reference/   # A/B routing reference (not hands-on)
-└── setup/                             # Facilitator: cluster provisioning
+├── config/                      # eval-hub-server provider configs
+│   └── providers/               # lm_eval.yaml, garak.yaml
+├── adapters/                    # eval-hub adapter implementations
+│   ├── lm_eval/main.py
+│   └── garak/main.py
+│
+├── slides/                      # Marp presentation decks (Uncover theme)
+│   ├── 00-opening.md
+│   ├── 01-setup-slides.md
+│   ├── 02-local-eval-slides.md
+│   ├── 03-irr-slides.md
+│   └── 04-mcp-slides.md
+│
+├── tests/                       # Adapter test suite (18 unit tests)
+│   └── test_lmeval_adapter.py
+├── resources/                   # Quick-reference cards (OWASP, AVID, CWE)
+├── setup/                       # Facilitator cluster provisioning (optional)
+└── FACILITATOR_GUIDE.md         # Delivery notes, timing, recovery procedures
 ```
 
 ---
 
-## Key Commands by Phase
+## Key Commands
 
-### Local eval-hub-server (Sections 01–03)
+### Section 01 — Setup
 
 ```bash
-# lm-eval: static safety benchmarks
-lm_eval \
-  --model openai-chat-completions \
-  --model_args "base_url=${MODEL_ENDPOINT}/chat/completions,model=${MODEL_NAME}" \
-  --tasks bbq_generate,mmlu_business_ethics_generative \
-  --limit 5 --apply_chat_template --output_path results/
+bash 01-setup/setup.sh
+# Starts eval-hub-server on localhost:18080
+# Registers lm-eval and garak providers
+# Installs evalhub-mcp binary for Act 3
 
-# Garak: adversarial probing
-python3 -m garak --config configs/garak-local-live.yaml
-
-# IRR computation
-python3 scripts/compute_irr.py
-python3 scripts/register_benchmark.py --dry-run
+evalhub health
+evalhub providers list
 ```
 
-### Kubernetes (Section 04)
+### Act 1 — Baseline Replication (Section 02)
 
 ```bash
-# Submit evaluation
-evalhub eval run --name icad2026-cluster-eval \
-  --model-url "${MODEL_ENDPOINT}/chat/completions" \
-  --model-name "${MODEL_NAME}" \
+# BBQ intersectional bias
+evalhub eval run \
   --provider lm_evaluation_harness \
-  --benchmark bbq_generate --param "limit=5"
+  --benchmark bbq_generate \
+  --model-url "${MODEL_ENDPOINT}" \
+  --model-name "${MODEL_NAME}" \
+  --param limit=5 --wait
 
-# Register IRR benchmark (actual POST, not dry-run)
-python3 ../03-irr-local/scripts/register_benchmark.py \
-  --report ../03-irr-local/irr_report.json
+# MMLU business ethics
+evalhub eval run \
+  --provider lm_evaluation_harness \
+  --benchmark mmlu_business_ethics_generative \
+  --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --param limit=5 --wait
 
-# Create custom collection
-evalhub collections create --file configs/custom-safety-collection.yaml
-evalhub collections run workshop-custom-safety-v1 \
-  --model-url "${MODEL_ENDPOINT}/chat/completions" \
-  --model-name "${MODEL_NAME}" --wait
+# Garak adversarial probes
+evalhub eval run \
+  --provider garak \
+  --benchmark "lmrc.Bullying" \
+  --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --param generations=3 --wait
+```
 
-# Kubernetes CR alternative
-oc apply -f configs/eval-run-live.yaml
-oc get lmevaljob -n workshop-eval -w
+### Guardrails Demo
+
+```bash
+cd guardrails && bash setup.sh
+# Starts NeMo Guardrails proxy on localhost:18090
+# Two Colang rails: PII detection + jailbreak blocking
+export GUARDED_ENDPOINT="http://localhost:18090/v1"
+
+# Re-run Garak against the guarded endpoint
+evalhub eval run --provider garak --benchmark "promptinject.HijackHateHumans" \
+  --model-url "${GUARDED_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --name "guarded-promptinject" --param generations=3 --wait
+```
+
+### Act 2 — Novel Contribution (Section 03)
+
+```bash
+cd 03-irr-local
+python3 scripts/compute_irr.py        # Cohen's κ + Krippendorff's α
+python3 scripts/register_benchmark.py # Register in local EvalHub (no --dry-run)
+
+evalhub eval run \
+  --provider lm_evaluation_harness \
+  --benchmark icad2026-irr-safety \
+  --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --param limit=5 --wait
+```
+
+### Act 3 — MCP Comparison (Section 04)
+
+```bash
+cd 04-mcp-compare && bash setup.sh
+# Opens compare_approaches.ipynb
+# Or run standalone: python3 compare_approaches.py
+```
+
+---
+
+## Rendering Slides
+
+```bash
+# Requires Marp CLI: npm install -g @marp-team/marp-cli
+marp slides/00-opening.md --output slides/00-opening.html
+marp slides/ --output slides/
+
+# Or use Marp Desktop / VS Code Marp extension
+```
+
+All decks use the **Uncover** theme with a dark Red Hat colour scheme.
+
+---
+
+## Running Tests
+
+```bash
+# Unit tests only (no network, < 5 seconds)
+uv run pytest tests/ -v -m "not smoke and not integration"
+
+# + Smoke tests (requires HuggingFace internet access)
+uv run pytest tests/ -v -m "not integration"
+
+# Full suite (requires OPENROUTER_API_KEY)
+OPENROUTER_API_KEY=sk-or-... uv run pytest tests/ -v
 ```
 
 ---
@@ -148,11 +225,25 @@ oc get lmevaljob -n workshop-eval -w
 ## Each Section Is Self-Contained
 
 Every section has:
-- `setup.sh` — idempotent configuration (no downloads after `uv sync`)
-- `reset.sh` — removes section output so the section can be retried
+- `setup.sh` — idempotent configuration (safe to re-run)
+- `reset.sh` — removes section output so the section can be retried cleanly
+- `lab.md` — step-by-step instructions with expected outputs
+
+---
+
+## At Scale: Kubernetes (Pre-Recorded Demo)
+
+The same `evalhub` CLI, benchmark IDs, and MCP notebook work against a Kubernetes cluster. Only `base_url` changes:
+
+```bash
+evalhub config set base_url https://your-evalhub-cluster.example.com
+```
+
+The closing session includes a pre-recorded demo of this running on Red Hat OpenShift AI (RHOAI 3.4+). Facilitator cluster provisioning scripts are in `setup/`.
 
 ---
 
 ## License
 
 Apache 2.0. Red Hat, OpenShift, and OpenShift AI are trademarks of Red Hat, Inc.
+NeMo Guardrails is open source software by NVIDIA.
