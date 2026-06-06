@@ -1,11 +1,11 @@
 ---
 marp: true
-theme: default
+theme: uncover
 paginate: true
-backgroundColor: "#0f0f1a"
-color: "#e8e8e8"
 style: |
   section {
+    background: #0f0f1a;
+    color: #e8e8e8;
     font-family: 'Red Hat Text', 'Segoe UI', sans-serif;
     padding: 48px 64px;
   }
