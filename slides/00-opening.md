@@ -397,11 +397,9 @@ Takes about 30 seconds. Read the output.
 
 <div class="center">
 
-![width:320px](../resources/00_qr_guardrails_under_pressure.png)
+![width:300px](./00_qr_guardrails_under_pressure.png)
 
 <p class="qr-url">red.ht/guardrails</p>
-
-`github.com/williamcaban/ieee-icad2026`
 
 </div>
 
