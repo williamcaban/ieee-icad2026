@@ -3,15 +3,27 @@ marp: true
 theme: uncover
 paginate: true
 style: |
-  section { background: #0f0f1a; color: #e8e8e8; font-family: 'Red Hat Text', sans-serif; font-size: 28px; padding: 48px 64px; }
-  h1 { color: #ee0000; } h2 { color: #f5a623; }
+  section {
+    background: #0f0f1a;
+    color: #e8e8e8;
+    font-family: 'Red Hat Text', 'Segoe UI', sans-serif;
+    font-size: 28px;
+    padding: 48px 64px;
+  }
+  h1 { color: #ee0000; font-size: 2.2em; }
+  h2 { color: #f5a623; border-bottom: 2px solid #ee0000; padding-bottom: 8px; }
+  h3 { color: #7bc8f6; }
   code { background: #1e1e2e; color: #cdd6f4; padding: 2px 6px; border-radius: 4px; }
   pre { background: #1e1e2e; border-left: 4px solid #ee0000; padding: 16px; font-size: 0.85em; }
+  .callout { background: #1a2a1a; border-left: 4px solid #50fa7b; padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; }
+  .warning { background: #2a1a1a; border-left: 4px solid #f5a623; padding: 12px 16px; margin: 16px 0; }
+  .cite { font-size: 0.75em; color: #888; font-style: italic; margin-top: 8px; }
+  .meta { font-size: 0.55em; color: #aaa; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; font-size: 0.75em; margin-top: 0.5em; }
+  .cols3 > div { background: #1a1a2e; border-top: 3px solid #ee0000; padding: 14px 12px; border-radius: 0 0 4px 4px; }
+  table { font-size: 0.88em; }
+  .center { text-align: center; }
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
-  .callout { background: #1a2a1a; border-left: 4px solid #50fa7b; padding: 12px 16px; margin: 12px 0; }
-  .warning { background: #2a1a1a; border-left: 4px solid #f5a623; padding: 12px 16px; margin: 12px 0; }
-  .cite { font-size: 0.78em; color: #888; font-style: italic; }
-  table { font-size: 0.85em; }
 ---
 
 # Act 1 — Replicating Established Baselines

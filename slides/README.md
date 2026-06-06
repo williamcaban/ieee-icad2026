@@ -15,8 +15,8 @@ Marp-compatible Markdown presentations — one per section. Each slide deck:
 | `00-opening.md` | Opening | Before Section 01 setup.sh |
 | `01-setup-slides.md` | Setup | Immediately before participants run setup.sh |
 | `02-local-eval-slides.md` | Local evaluation | Before Track A; again before Track B |
-| `03-irr-slides.md` | IRR benchmark | After the break, before Section 03 |
-| `04-kubernetes-slides.md` | Kubernetes | Before Section 04; closing slide at the end |
+| `03-irr-slides.md` | Act 2 — IRR benchmark | After the break, before Section 03 |
+| `04-mcp-slides.md` | Act 3 — MCP comparison | Before Section 04 |
 
 ---
 

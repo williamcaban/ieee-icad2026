@@ -48,10 +48,10 @@ Pause. Let this land.
 
 ### Slide 4 — What You'll Build (60 seconds)
 
-Walk through the four sections briefly. Emphasise:
-- Sections 01–03 run entirely on the laptop. No cluster access needed.
-- Section 04 uses the same `evalhub` CLI — only the backend changes.
-- Every output from today maps to a compliance artifact.
+Walk through the three acts briefly. Emphasise:
+- Everything runs on the laptop. No cluster access needed.
+- Act 3 (MCP notebook) calls the local EvalHub programmatically — same server, different interface.
+- Every output maps to a research publication artifact or a governance document.
 
 ---
 
@@ -68,17 +68,13 @@ If anyone asks about specific tools, defer to the relevant section's lab.md.
 
 ### Slide 6 — Architecture (90 seconds)
 
-Draw attention to the key insight: **the CLI is the same in both phases.** The only change between local and cluster is `evalhub config set base_url`.
-
-This is not a demo tool that you'd throw away in production. It's the production pattern, run locally first to reduce the barrier.
-
-If you have a whiteboard, sketch the two-phase diagram:
+Draw attention to the key insight: **everything runs locally today**. The same `evalhub` CLI and the same benchmark IDs work against a Kubernetes cluster — only `base_url` changes. That scale-up is shown via pre-recorded demo in the closing segment.
 
 ```
-Laptop phase (01-03):  evalhub CLI → localhost:18080 → subprocess → OpenRouter
-Cluster phase (04):    evalhub CLI → RHOAI cluster  → LMEvalJob pod → OpenRouter
-                                        ↑
-                              Same commands. Different backend.
+All sections (laptop):   evalhub CLI → localhost:18080 → subprocess → OpenRouter/Ollama/vLLM
+At scale (closing demo): evalhub CLI → RHOAI cluster  → LMEvalJob pod → model endpoint
+                                              ↑
+                                    Same commands. Different backend.
 ```
 
 ---
@@ -110,13 +106,12 @@ Read them. Emphasise `reset.sh` — removing the fear of breaking things is esse
 ## Pre-Workshop Checklist (Facilitator)
 
 Before the event:
-- [ ] Run `bash setup/platform-setup.sh` on the cluster (creates namespace, deploys EvalHub)
-- [ ] Verify `evalhub health` against the cluster returns healthy
-- [ ] Confirm `workshop-eval` namespace exists and `workshop-sa` has RBAC
-- [ ] Test `evalhub eval run` end-to-end against the cluster (Section 04 pattern)
-- [ ] Have the RHOAI Dashboard URL ready to paste
+- [ ] Run `uv sync && source .venv/bin/activate` and verify all tools respond
+- [ ] Configure `.workshop-env` with the chosen model endpoint (OpenRouter / Ollama / vLLM)
+- [ ] Run `bash 01-setup/setup.sh` end-to-end and verify `evalhub health` returns healthy
 - [ ] Confirm OpenRouter free tier is not rate-limited (test with `liquid/lfm-2.5-1.2b-instruct:free`)
-- [ ] Share `.workshop-env` template with cluster endpoint pre-filled (removes Step 3 from Section 01 for participants)
+- [ ] Prepare pre-recorded Kubernetes demo for the closing segment (see `FACILITATOR_GUIDE.md`)
+- [ ] Share `.workshop-env.example` with participants before the session
 
 ## Common Opening Questions
 
@@ -124,6 +119,6 @@ Before the event:
 
 **"Does EvalHub work with any model?"** — Any endpoint that speaks the OpenAI chat completions API. vLLM, Ollama, LiteLLM, the major cloud providers — all work without code changes.
 
-**"Do I need to know Kubernetes?"** — For Sections 01-03, no. Section 04 introduces two `oc` commands, both of which are in the lab.md with expected outputs.
+**"Do I need to know Kubernetes?"** — No. All hands-on sections run entirely on your laptop. Kubernetes is shown in a pre-recorded demo during the closing segment.
 
 **"Is garak production-ready?"** — Yes. 0.15+ is used in production red-teaming at several enterprises and AI safety organisations. It covers systematic automated probe coverage, not a replacement for a full manual red-team engagement.

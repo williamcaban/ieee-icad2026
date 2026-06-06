@@ -1,6 +1,6 @@
 # Section 01 — Environment Setup
 
-> **Where you are:** `[ ● 01 Setup ] → [ 02 Local Eval ] → [ 03 IRR ] → [ 04 Kubernetes ]`
+> **Where you are:** `[ ● 01 Setup ] → [ Act 1: Baseline ] → [ Act 2: Novel ] → [ Act 3: MCP Compare ]`
 
 **Duration**: 10 minutes · **Needs cluster?** No — laptop only
 
@@ -37,13 +37,13 @@ Your laptop
 source .venv/bin/activate
 ```
 
-Verify the four tools are available:
+Verify the tools are available:
 
 ```bash
 lm_eval --help | head -1        # Expected: usage: lm-eval ...
 garak --version                 # Expected: garak LLM vulnerability scanner v0.15.x
 evalhub version                 # Expected: evalhub 0.4.x
-oc version --client             # Expected: Client Version: 4.1x.x (optional for Sections 01-03)
+evalhub-mcp --version           # Expected: evalhub-mcp 0.x.x  (for Act 3)
 ```
 
 **What each tool is:**
@@ -52,8 +52,8 @@ oc version --client             # Expected: Client Version: 4.1x.x (optional for
 |------|--------------------------|
 | `lm_eval` | Runs curated safety benchmarks against any OpenAI-compatible model endpoint |
 | `garak` | Systematically probes models with adversarial inputs to find exploitable weaknesses |
-| `evalhub` | CLI for submitting evaluation jobs and reading results — works identically against the local server and the cluster |
-| `oc` | OpenShift CLI — only needed for Section 04 |
+| `evalhub` | CLI for submitting evaluation jobs and reading results — works identically locally and on Kubernetes |
+| `evalhub-mcp` | MCP server that exposes EvalHub to any AI coding assistant or Python script (Act 3) |
 
 ---
 
@@ -94,12 +94,12 @@ bash setup.sh
 
 **What `setup.sh` does** (read this before running it):
 
-1. Verifies all four tools are on `PATH`
-2. Sources `.workshop-env` and validates your API key
+1. Verifies all tools are on `PATH`
+2. Sources `.workshop-env` and validates your model endpoint and API key
 3. Exports `OPENAI_API_KEY` (the alias that `lm-eval` and `garak` read internally)
 4. Starts `eval-hub-server --local` on port `18080` in the background
 5. Registers the `lm_evaluation_harness` and `garak` providers
-6. If logged in to OpenShift: configures the cluster endpoint for Section 04
+6. Installs `evalhub-mcp` binary (for Act 3 MCP comparison)
 
 Expected output:
 
@@ -180,7 +180,7 @@ You now have:
 - The `evalhub` CLI configured to point at it
 - OpenRouter API access verified
 
-**In Section 02**, you'll submit your first evaluation job through this server — the same `evalhub eval run` command you'll use against the cluster in Section 04.
+**In Act 1 (Section 02)**, you'll submit your first evaluation job through this server using `evalhub eval run` — the same command that works against both the local server and a Kubernetes cluster.
 
 ---
 
@@ -192,4 +192,4 @@ You now have:
 
 **`evalhub health` fails** — The server may have stopped. Re-run `bash setup.sh`.
 
-**`oc version` fails** — That's fine. `oc` is only needed for Section 04. Continue to Section 02.
+**`evalhub-mcp` not found** — Run `bash setup.sh` again; it installs via Homebrew or the GitHub release fallback.

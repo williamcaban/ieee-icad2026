@@ -1,6 +1,6 @@
 # Section 02 — Local Safety Evaluation
 
-> **Where you are:** `[ 01 Setup ] → [ ● 02 Local Eval ] → [ 03 IRR ] → [ 04 Kubernetes ]`
+> **Where you are:** `[ 01 Setup ] → [ ● Act 1: Baseline ] → [ Act 2: Novel ] → [ Act 3: MCP Compare ]`
 
 **Duration**: 20 minutes (Track A: 12 min | Track B: 8 min) · **Needs cluster?** No
 

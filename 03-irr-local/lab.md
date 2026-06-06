@@ -1,6 +1,6 @@
 # Section 03 — IRR/IAA Custom Benchmark
 
-> **Where you are:** `[ 01 Setup ] → [ 02 Local Eval ] → [ ● 03 IRR ] → [ 04 Kubernetes ]`
+> **Where you are:** `[ 01 Setup ] → [ Act 1: Baseline ] → [ ● Act 2: Novel ] → [ Act 3: MCP Compare ]`
 
 **Duration**: 12 minutes · **Needs cluster?** No — entirely laptop-side
 

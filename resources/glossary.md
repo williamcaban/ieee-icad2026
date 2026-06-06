@@ -56,7 +56,7 @@ Plain-language definitions for every term used in this workshop. Two sentences m
 
 ## Infrastructure
 
-**eval-hub-server** — The server component of EvalHub that exposes the REST API (`/api/v1/evaluations/*`), orchestrates evaluation jobs, and stores results. In this workshop, Sections 01-03 run it locally on port 18080; Section 04 uses the cluster-deployed instance.
+**eval-hub-server** — The server component of EvalHub that exposes the REST API (`/api/v1/evaluations/*`), orchestrates evaluation jobs, and stores results. In this workshop, all sections run it locally on port 18080. The same server image deploys to Kubernetes for the production pattern shown in the closing demo.
 
 **eval-hub-sdk** — The Python client library for EvalHub, installed via `uv add eval-hub-sdk[cli,adapter]`. The `[cli]` extra adds the `evalhub` command-line tool; the `[adapter]` extra adds the `FrameworkAdapter` base class for writing evaluation provider adapters.
 
