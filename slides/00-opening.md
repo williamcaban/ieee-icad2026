@@ -23,6 +23,8 @@ style: |
   .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; font-size: 0.75em; margin-top: 0.5em; }
   .cols3 > div { background: #1a1a2e; border-top: 3px solid #ee0000; padding: 14px 12px; border-radius: 0 0 4px 4px; }
   table { font-size: 0.88em; }
+  .center { text-align: center; }
+  .qr-url { font-size: 1.4em; font-weight: bold; color: #ee0000; letter-spacing: 0.04em; margin-top: 0.3em; }
 ---
 
 <!-- Slide 1: Title -->
@@ -390,4 +392,16 @@ Takes about 30 seconds. Read the output.
 
 ---
 
-*Slides: `slides/00-opening.md` · Render: `marp slides/00-opening.md --output slides/00-opening.html`*
+<!-- Slide 17: Repository QR -->
+## Get the Workshop Material
+
+<div class="center">
+
+![width:320px](../resources/00_qr_guardrails_under_pressure.png)
+
+<p class="qr-url">red.ht/guardrails</p>
+
+`github.com/williamcaban/ieee-icad2026`
+
+</div>
+
