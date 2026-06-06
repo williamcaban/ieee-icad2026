@@ -20,7 +20,6 @@
 
 > **Guardrails timing note:** The 8-minute guardrails demo is embedded in Act 1 Track B — start Garak running, then demo the guardrail proxy while Garak executes, and re-run the probe against the guarded endpoint as Garak finishes. If the room is behind, facilitate the demo as a live presenter walkthrough (3 min) rather than participant hands-on.
 
-> **Act 3 status:** `04-mcp-compare/` lab files are in progress. Until available, present the Act 3 slides and walk through the MCP notebook concept as a facilitator demo. Participants can follow along with the slides.
 
 ---
 
@@ -251,7 +250,7 @@ evalhub benchmarks list    # should show icad2026-irr-safety
 ## Act 3 — MCP Research Interface (23 min)
 
 Slides: `slides/04-mcp-slides.md`  
-Lab: `04-mcp-compare/lab.md` *(section in progress — use slides as primary guide)*
+Lab: `04-mcp-compare/lab.md`
 
 ### Timing guide
 
@@ -316,7 +315,7 @@ curl http://localhost:3001/health
 | MCP server not responding | Re-run the start commands above; check port 3001 is free |
 | `icad2026-irr-safety` not found | Participant skipped Act 2 — run `cd 03-irr-local && python3 scripts/register_benchmark.py` |
 | `matplotlib` import fails | `uv sync` in repo root |
-| `04-mcp-compare/` files not available | Present from slides; participants follow along with `slides/04-mcp-slides.md` |
+| Score shows `None` | Check job status directly: `python3 -c "from mcp_client import EvalHubMCPClient; m=EvalHubMCPClient(); print(m.get_job_status('<job-id>'))"`|
 
 ---
 
