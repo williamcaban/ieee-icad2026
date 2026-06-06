@@ -6,15 +6,16 @@ After completing the workshop evaluations, use this checklist to collect artifac
 
 ## Artifacts Produced in This Workshop
 
-| Section | Artifact | Location | Description |
-|---------|---------|----------|-------------|
-| 03 | EvalRun result | `evalhub run get safety-eval-section03 --output json` | Built-in safety benchmark scores with pass/fail verdict |
-| 03 | Garak HTML report | `03-safety-evaluation/garak-output/garak-report-section03.html` | Adversarial probe findings mapped to OWASP LLM Top 10 |
-| 04 | Custom collection definition | `04-custom-collection/configs/custom-safety-collection.yaml` | Policy-as-code: thresholds, weights, risk level, regulatory references |
-| 04 | Custom EvalRun result with governance metadata | `evalhub run get custom-eval-section04 --output json` | Scored result with EU AI Act and NIST RMF citations embedded |
-| 05 | IRR report | `05-irr-benchmark/irr_report.json` | Annotator reliability evidence for custom benchmark |
-| 05 | Registered custom benchmark | `evalhub benchmark get workshop-irr-safety-v1 --output json` | Benchmark with IRR metadata embedded in the spec |
-| 06 | Pipeline decision report | KFP run artifact: `decision_report` | A/B comparison with winner rationale and per-model scores |
+| Section | Artifact | How to retrieve | Description |
+|---------|---------|-----------------|-------------|
+| Act 1 (02) | Baseline eval results | `evalhub eval results <job-id> --format json` | BBQ bias, MMLU ethics, and Garak adversarial probe scores with pass/fail verdict |
+| Act 1 (02) | `results/baseline_summary.json` | `cat 02-local-evaluation/results/baseline_summary.json` | Structured baseline snapshot used for Act 3 comparison |
+| Guardrails | Guarded eval result | `evalhub eval results guarded-promptinject --format json` | Same Garak probe re-run against NeMo Guardrails proxy — documents remediation evidence |
+| Act 2 (03) | `irr_report.json` | `cat 03-irr-local/irr_report.json` | Annotator reliability evidence: Cohen's κ, Krippendorff's α, excluded items, recommendation |
+| Act 2 (03) | Registered benchmark spec | `evalhub benchmarks show icad2026-irr-safety --format json` | Benchmark with IRR metadata embedded — the reliability evidence travels with the benchmark |
+| Act 3 (04) | `comparison_report.json` | `cat 04-mcp-compare/comparison_report.json` | Structured side-by-side comparison: baseline vs novel approach |
+| Act 3 (04) | `comparison_plot.png` | `04-mcp-compare/comparison_plot.png` | Publication-ready figure suitable for a paper or model card |
+| Guardrails | `rails.co` policy | `cat guardrails/config/rails.co` | Auditable Colang policy — the complete guardrail logic in ~30 lines |
 
 ---
 
@@ -22,21 +23,19 @@ After completing the workshop evaluations, use this checklist to collect artifac
 
 | Article | Obligation | Satisfied By |
 |---------|-----------|-------------|
-| **Art. 9** — Risk management system | Establish, implement, document, and maintain a risk management system throughout the lifecycle | EvalRun reports (Sections 03, 04) + custom collection with `governance.riskLevel` and `reviewCycle` fields |
-| **Art. 10** — Data governance | Training data must be examined for possible biases | `crows-pairs-v1`, `winogender-v1`, `bbq-v1` benchmark scores + IRR report (Section 05) |
-| **Art. 13** — Transparency and provision of information | High-risk AI systems must be transparent and provide information to deployers | EvalHub result JSON includes model name, collection version, timestamp, and verdict — suitable for embedding in model cards |
-| **Art. 52** — Transparency obligations for certain AI systems | Systems interacting with natural persons must disclose AI nature | Governance metadata in collection YAML includes `contactEmail` and `owner` fields |
-| **Art. 69** — Codes of conduct | Organizations are encouraged to draw up voluntary codes of conduct | OWASP LLM Top 10 and NIST AI RMF provide the basis; Garak+EvalHub results are the evidence |
+| **Art. 9** — Risk management system | Establish, implement, document, and maintain a risk management system throughout the lifecycle | Baseline eval results (Act 1) + registered collection with per-benchmark thresholds |
+| **Art. 10** — Data governance | Training data must be examined for possible biases | BBQ intersectional bias scores + IRR report demonstrating annotation quality (Act 2) |
+| **Art. 13** — Transparency and provision of information | High-risk AI systems must be transparent and provide information to deployers | EvalHub result JSON includes model name, benchmark version, timestamp, and verdict — embeddable in model cards |
+| **Art. 52** — Transparency obligations | Systems interacting with natural persons must disclose AI nature | Guardrail rail definitions (`rails.co`) document the policy layer applied to user-facing outputs |
+| **Art. 69** — Codes of conduct | Organisations are encouraged to draw up voluntary codes of conduct | OWASP LLM Top 10 and NIST AI RMF provide the basis; Garak + EvalHub results are the traceable evidence |
 
 ### Minimum Documentation Package (EU AI Act Annex IV)
 
-To claim compliance, collect and retain:
-
-- [ ] EvalRun result JSON for each evaluation (Sections 03, 04)
-- [ ] Garak HTML report with probe-level findings (Section 03)
-- [ ] Custom collection YAML with regulatory references embedded (Section 04)
-- [ ] IRR report JSON for any human-labeled benchmarks (Section 05)
-- [ ] KFP pipeline `decision_report` artifact for A/B routing decisions (Section 06)
+- [ ] Baseline eval result JSON for each benchmark (Act 1)
+- [ ] Guardrail remediation evidence: guarded eval result showing probe blocked (Guardrails demo)
+- [ ] IRR report JSON for any human-labelled benchmarks (Act 2)
+- [ ] Registered benchmark spec with reliability metadata embedded (Act 2)
+- [ ] Side-by-side comparison report: baseline vs novel approach (Act 3)
 - [ ] Model card embedding the collection version, evaluation date, and overall verdict
 
 ---
@@ -45,47 +44,50 @@ To claim compliance, collect and retain:
 
 | RMF Function | Profile | Workshop Evidence |
 |-------------|---------|-------------------|
-| **GOVERN** | GOVERN 1.1 — Organizational policies for AI risk management | Custom collection YAML encodes the policy (thresholds, weights, risk level, review cycle) |
-| **GOVERN 1.4** — Teams have skills and resources for risk management | This workshop demonstrates the tooling and methodology |
-| **MAP** | MAP 2.1 — AI risks are identified and evaluated | Garak probes map findings to OWASP LLM Top 10 and AVID taxonomy |
-| **MAP 2.3** — Scientific findings on AI risks are considered | ToxiGen, BBQ, CrowS-Pairs, TruthfulQA are peer-reviewed benchmarks |
-| **MEASURE** | MEASURE 2.5 — Effectiveness of AI risk controls is assessed | EvalRun pass/fail verdict with per-benchmark breakdown |
-| **MEASURE 2.6** — Testing for AI-specific risks is conducted | Garak adversarial probing covers LLM01, LLM02, LLM06 attack surfaces |
-| **MANAGE** | MANAGE 1.3 — Responses to identified risks are managed | KFP pipeline implements automated routing: failed models do not receive production traffic |
-| **MANAGE 2.2** — Risk responses are documented and tracked | Pipeline `decision_report` artifact is the traceable routing record |
+| **GOVERN 1.1** | Organisational policies for AI risk management | Collection YAML encodes the policy (benchmark IDs, weights, thresholds) |
+| **GOVERN 1.4** | Teams have skills and resources for risk management | This workshop demonstrates the tooling and methodology end-to-end |
+| **MAP 2.1** | AI risks are identified and evaluated | Garak probes map findings to OWASP LLM Top 10 and AVID taxonomy |
+| **MAP 2.3** | Scientific findings on AI risks are considered | BBQ (Parrish et al. 2022), MMLU (Hendrycks et al. 2021), Garak (Derczynski et al. 2024) are peer-reviewed |
+| **MEASURE 2.5** | Effectiveness of AI risk controls is assessed | Guarded vs unguarded eval comparison (Guardrails demo) — same probe, documented outcome difference |
+| **MEASURE 2.6** | Testing for AI-specific risks is conducted | Garak adversarial probing covers LLM01, LLM02, LLM06 attack surfaces |
+| **MANAGE 1.3** | Responses to identified risks are managed | Guardrails proxy with documented Colang policy; re-evaluation confirms controls work |
+| **MANAGE 2.2** | Risk responses are documented and tracked | `comparison_report.json` and `irr_report.json` are the traceable records |
 
 ---
 
 ## Recommended Retention Schedule
 
-| Artifact Type | Retention Period | Storage Location |
-|--------------|-----------------|-----------------|
-| EvalRun result JSON | Model lifetime + 3 years | OCI registry as signed artifact, or compliance system |
-| Garak HTML reports | 1 year rolling | S3/object storage, indexed by model version |
-| Collection YAML | Indefinitely (version-controlled) | Git repository with signed commits |
-| IRR reports | Benchmark lifetime | Same repo as benchmark definition |
-| KFP decision artifacts | 1 year rolling | KFP artifact store or S3 |
+| Artifact | Retention | Storage |
+|---------|-----------|---------|
+| Eval result JSON | Model lifetime + 3 years | OCI registry as signed artifact, or compliance system |
+| `irr_report.json` | Benchmark lifetime | Same repository as benchmark definition |
+| `rails.co` policy | Indefinitely (version-controlled) | Git repository — policy changes are commit history |
+| `comparison_report.json` | Publication lifetime | Supplementary materials with the paper |
 
 ---
 
-## Quick Export Commands
+## Quick Export
 
 ```bash
-# Export all governance artifacts to a single directory
 EXPORT_DIR=./governance-export-$(date +%Y%m%d)
 mkdir -p "${EXPORT_DIR}"
 
-# Section 03: built-in eval + garak
-evalhub run get safety-eval-section03 --output json > "${EXPORT_DIR}/s03-eval-result.json"
-cp 03-safety-evaluation/garak-output/garak-report-section03.html "${EXPORT_DIR}/"
+# Act 1: baseline results
+evalhub eval results --format json > "${EXPORT_DIR}/baseline-eval.json"
 
-# Section 04: custom eval
-evalhub run get custom-eval-section04 --output json > "${EXPORT_DIR}/s04-custom-eval-result.json"
-cp 04-custom-collection/configs/custom-safety-collection.yaml "${EXPORT_DIR}/"
+# Act 2: IRR report + benchmark spec
+cp 03-irr-local/irr_report.json "${EXPORT_DIR}/"
+evalhub benchmarks show icad2026-irr-safety --format json \
+  > "${EXPORT_DIR}/irr-benchmark-spec.json"
 
-# Section 05: IRR report + benchmark spec
-cp 05-irr-benchmark/irr_report.json "${EXPORT_DIR}/"
-evalhub benchmark get workshop-irr-safety-v1 --output json > "${EXPORT_DIR}/s05-benchmark-spec.json"
+# Act 3: comparison
+cp 04-mcp-compare/comparison_report.json "${EXPORT_DIR}/"
+cp 04-mcp-compare/comparison_plot.png    "${EXPORT_DIR}/"
+
+# Guardrails: policy + remediation evidence
+cp guardrails/config/rails.co "${EXPORT_DIR}/"
+evalhub eval results guarded-promptinject --format json \
+  > "${EXPORT_DIR}/guardrails-remediation-evidence.json"
 
 echo "Governance artifacts exported to: ${EXPORT_DIR}"
 ls -lh "${EXPORT_DIR}"
