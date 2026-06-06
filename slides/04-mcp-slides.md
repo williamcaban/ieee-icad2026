@@ -27,15 +27,13 @@ You have two benchmarks in EvalHub — the established baseline and your novel c
 
 ## Why Not Just Read the JSON?
 
-You could parse the output files directly. But EvalHub is a research platform — it stores results from many runs, many models, many collaborators.
-
-The **MCP server** gives you a stable programmatic interface into that platform:
+EvalHub stores results from many runs, many models, many collaborators. The **MCP server** gives you a stable programmatic interface into that platform:
 
 - Submit new evaluations without opening a terminal
 - Query results across runs without file path management
-- The same interface works whether EvalHub is on your laptop or on a Kubernetes cluster
+- Same interface whether EvalHub is on your laptop or a Kubernetes cluster
 
-Most MCP clients (Claude Code, VS Code, Cursor) assume you already have one configured. This lab lowers that barrier: a self-contained Python script that speaks MCP with no extra dependencies.
+Most MCP clients assume you already have one configured. This lab lowers that barrier: a self-contained Python script, no extra dependencies.
 
 ---
 
@@ -70,9 +68,9 @@ def mcp_call(tool_name, arguments, mcp_url="http://localhost:3001"):
     return response.json()["result"]
 ```
 
-That is the complete MCP client. Eight lines. No SDK. No async framework. Reads like what it is.
+Eight lines. No SDK. No async. Reads like what it is.
 
-The `mcp_client.py` in `04-mcp-compare/` wraps this into three named methods — `submit_evaluation`, `get_job_status`, `cancel_job` — so the notebook cells stay readable.
+`mcp_client.py` wraps this into `submit_evaluation`, `get_job_status`, `cancel_job`.
 
 ---
 

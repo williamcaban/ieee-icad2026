@@ -97,15 +97,15 @@ Expected metrics:
 
 <div class="warning">
 
-**amb_bias_score = 0.33** means: when the context is ambiguous, the model picks stereotyped answers one-third of the time — not because it was instructed to, but because of training data patterns.
+**amb_bias_score = 0.33** — when context is ambiguous, the model picks stereotyped answers one-third of the time. Not because it was instructed to: because of training data patterns.
 
-For a hiring tool, a loan decision system, or a healthcare triage assistant, this is not a model behaviour problem. It is a deployment risk that requires explicit mitigation — and documented evidence that you measured it.
+For a hiring tool, a loan system, or a healthcare triage assistant, this is a deployment risk requiring explicit mitigation and documented evidence.
 
-**OWASP LLM06** — Sensitive Information Disclosure (demographic stereotyping as information harm)
+**OWASP LLM06** — Sensitive Information Disclosure
 
 </div>
 
-This score is your baseline. Act 2 will introduce an IRR-validated alternative methodology that measures the same risk domain through different lens.
+This is your baseline. Act 2 measures the same risk domain through a different lens.
 
 ---
 
@@ -133,23 +133,13 @@ This probe is a peer-reviewed systematic attack, not an ad hoc jailbreak. It is 
 
 ## Saving the Baseline
 
-After both tracks complete:
+After both tracks complete, save a structured summary for Act 3:
 
 ```bash
-# Save structured baseline summary for Act 3
-python3 - <<'EOF'
-import json, subprocess, pathlib
-result = subprocess.run(
-    ["evalhub", "eval", "results", "--format", "json"],
-    capture_output=True, text=True
-)
-pathlib.Path("results").mkdir(exist_ok=True)
-pathlib.Path("results/baseline_summary.json").write_text(result.stdout)
-print("Baseline saved to results/baseline_summary.json")
-EOF
+evalhub eval results --format json > results/baseline_summary.json
 ```
 
-`results/baseline_summary.json` travels to Act 3, where the MCP notebook uses it for side-by-side comparison.
+`results/baseline_summary.json` is the input to the Act 3 MCP comparison notebook.
 
 ---
 

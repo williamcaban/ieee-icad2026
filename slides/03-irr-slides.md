@@ -46,20 +46,18 @@ A benchmark with low annotator agreement is not a benchmark — it is noise with
 
 ## Your Contribution: An IRR Quality Gate
 
-The methodology you are about to compute — **Inter-Rater Reliability analysis applied as a pre-registration quality gate** — is itself a research contribution.
+**IRR analysis applied as a pre-registration quality gate** is itself a research contribution.
 
-It answers: *before you run a model against this dataset, can you demonstrate that the labels are reliable enough to draw conclusions from?*
+It answers: *before running a model against this dataset, can you demonstrate the labels are reliable enough to draw conclusions from?*
 
 <div class="analogy">
 
 Imagine two radiologists labelling X-rays as "concerning" or "clear."  
 If they agree 95% of the time: trust the label.  
 If they agree 50% of the time: the label is a coin flip.  
-**Krippendorff's Alpha** quantifies this for any number of annotators, any label type.
+**Krippendorff's Alpha** quantifies this for any number of annotators.
 
 </div>
-
-This same reasoning applies to your safety annotation dataset. And proposing α ≥ 0.67 as the publication threshold — rather than just reporting it post-hoc — is a methodological proposal you can defend.
 
 ---
 
@@ -102,13 +100,18 @@ The pairwise κ between Annotators 2 and 3 (0.375) reveals a systematic disagree
 
 ## Registering the Novel Benchmark
 
-Once α meets the threshold, register the benchmark in the local EvalHub — without `--dry-run`:
+Once α meets the threshold, register it in local EvalHub (no `--dry-run`):
 
 ```bash
 python3 scripts/register_benchmark.py
+evalhub benchmarks list   # confirm icad2026-irr-safety appears
 ```
 
-Then run it against the same model used in Act 1:
+---
+
+## Running the Novel Benchmark
+
+Run against the same model used in Act 1:
 
 ```bash
 evalhub eval run \
@@ -119,7 +122,7 @@ evalhub eval run \
   --param limit=5 --wait
 ```
 
-**Why the same model?** Because Act 3 compares your novel benchmark against the baseline on equal footing — same model, same infrastructure, same evaluation framework.
+Same model, same framework — Act 3 can now compare on equal footing.
 
 ---
 
@@ -147,17 +150,13 @@ This is what "reproducible" means in practice.
 
 ## What You Have Built
 
-✅ IRR analysis on a real annotation dataset (Cohen's κ + Krippendorff's α)  
-✅ A principled exclusion decision — ambiguous texts filtered, not silently dropped  
+✅ IRR analysis (Cohen's κ + Krippendorff's α) on a real annotation dataset  
+✅ Principled exclusion — ambiguous texts filtered, not silently dropped  
 ✅ Benchmark registered in EvalHub with reliability metadata embedded  
-✅ Novel benchmark results against the same model as Act 1  
-✅ `results/novel_results.json` — the Act 3 comparison input
+✅ Novel benchmark results against the same model as Act 1
 
 <div class="callout">
 
-**→ Act 3:** Both baseline and novel results now exist in EvalHub.  
-A Python/Jupyter notebook calls the MCP server to retrieve them, compare them, and produce a publication-ready figure — without any MCP client framework.
+**→ Act 3:** Both results now exist in EvalHub. A Python notebook calls the MCP server, compares them, and plots a publication-ready figure — no MCP framework required.
 
 </div>
-
-<p class="cite">Reuse pattern: compute_irr.py works with any annotation CSV of the same structure. Replace the sample data with your own research annotations. The α threshold is configurable at the top of the script.</p>
