@@ -17,12 +17,12 @@ style: |
 
 <div class="journey">
 
-`[ ● 01 Setup ]` → `[ 02 Local Eval ]` → `[ 03 IRR ]` → `[ 04 Kubernetes ]`
+`[ ● 01 Setup ]` → `[ Act 1: Baseline ]` → `[ Act 2: Novel ]` → `[ Act 3: Compare ]`
 
 </div>
 
-**Goal:** One working `evalhub` CLI pointed at a live local server.  
-**Time:** 10 minutes · **Needs cluster?** No.
+**Goal:** One working `evalhub` CLI pointed at a live local server, and `evalhub-mcp` ready for Act 3.  
+**Time:** 12 minutes · **Needs cluster?** No — everything runs on your laptop.
 
 ---
 
@@ -32,14 +32,14 @@ style: |
 bash setup.sh
      │
      ├── 1. Verify: lm_eval, garak, evalhub, eval-hub-server
-     ├── 2. Source .workshop-env → validate OPENROUTER_API_KEY
-     ├── 3. Export OPENAI_API_KEY (alias for lm-eval internals)
+     ├── 2. Source .workshop-env → validate MODEL_ENDPOINT and API key
+     ├── 3. Export OPENAI_API_KEY (alias required by lm-eval internals)
      ├── 4. Start eval-hub-server on localhost:18080
      ├── 5. Register providers: lm_evaluation_harness, garak
-     └── 6. (If logged in) store cluster endpoint for Section 04
+     └── 6. Install evalhub-mcp binary (for Act 3)
 ```
 
-You don't need to understand each step. But knowing the script is **idempotent** (safe to re-run) matters: if anything breaks, `bash setup.sh` resets you.
+The script is **idempotent** — safe to re-run. If anything breaks, `bash setup.sh` resets you.
 
 ---
 
@@ -47,12 +47,15 @@ You don't need to understand each step. But knowing the script is **idempotent**
 
 | Tool | What it is | Think of it as |
 |------|------------|----------------|
-| `lm_eval` | Runs curated safety benchmarks | `pytest` for your model |
+| `lm_eval` | Benchmark harness for established safety tasks | `pytest` for your model |
 | `garak` | Adversarial probe framework | Fuzzing for prompts |
 | `eval-hub-server` | Local evaluation orchestrator | MLflow for safety evals |
 | `evalhub` CLI | Submit jobs, read results | `mlflow run` equivalent |
+| `evalhub-mcp` | MCP server for EvalHub | HTTP interface for Act 3 notebook |
 
-`uv sync` installed all of these at exact versions — no drift, no "works on my machine."
+`uv sync` pins every dependency at exact versions — no drift, no "works on my machine."
+
+**Model endpoint:** works with OpenRouter, Ollama, vLLM, or any OpenAI-compatible endpoint.
 
 ---
 
@@ -74,4 +77,4 @@ The server log is at `/tmp/evalhub-local.log`.
 
 </div>
 
-**→ Move to Section 02 when both commands succeed.**
+**→ Move to Act 1 when both commands succeed.**

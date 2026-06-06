@@ -5,32 +5,42 @@
 # Source before each workshop session:
 #   source .workshop-env
 #
-# .workshop-env is in .gitignore — your API keys will NOT be committed.
+# .workshop-env is in .gitignore — your credentials will NOT be committed.
 
-# OpenShift namespace where EvalHub is deployed
-export WORKSHOP_NAMESPACE="workshop-eval"
+# =============================================================================
+# Model endpoint — choose ONE of the three options below and uncomment it.
+# Any OpenAI-compatible chat/completions endpoint works.
+# =============================================================================
 
-# EvalHub instance endpoint (auto-detected by 01-platform-setup/setup.sh)
-export EVALHUB_ENDPOINT="https://workshop-evalhub-workshop-eval.apps.ocp.CLUSTER.opentlc.com"
-
-# EvalHub service account token (refreshed by setup.sh)
-export EVALHUB_TOKEN=""
-
-# OpenRouter — free OpenAI-compatible model API
+# --- Option A: OpenRouter (recommended — free tier, cloud inference, no GPU) ---
 # Get a free key at: https://openrouter.ai/keys
+export MODEL_ENDPOINT="https://openrouter.ai/api/v1"
+export MODEL_NAME="liquid/lfm-2.5-1.2b-instruct:free"
 export OPENROUTER_API_KEY="sk-or-v1-REPLACE-WITH-YOUR-KEY"
+export OPENAI_API_KEY="${OPENROUTER_API_KEY}"   # lm-eval uses this header internally
 
-# Local eval-hub-server (started by 01-setup/setup.sh, port avoids macOS conflicts)
+# --- Option B: Ollama (local, no API key, requires GPU or fast CPU) ----------
+# Run before the workshop: ollama pull llama3.2:3b && ollama serve
+# export MODEL_ENDPOINT="http://localhost:11434/v1"
+# export MODEL_NAME="llama3.2:3b"
+# export OPENAI_API_KEY="ollama"   # Ollama accepts any non-empty value
+
+# --- Option C: vLLM (local or institutional endpoint) ------------------------
+# export MODEL_ENDPOINT="http://localhost:8000/v1"
+# export MODEL_NAME="<model-id-as-registered-in-vllm>"
+# export OPENAI_API_KEY="<your-token-if-required>"
+
+# =============================================================================
+# eval-hub-server local port (started by 01-setup/setup.sh)
+# Port 18080 avoids conflicts with common macOS services on 8080.
+# =============================================================================
 export EVALHUB_LOCAL_PORT="18080"
 
-# Model endpoints (OpenRouter free tier)
-export MODEL_ENDPOINT="https://openrouter.ai/api/v1"
-export MODEL_NAME_A="liquid/lfm-2.5-1.2b-instruct:free"
-export MODEL_NAME_B="meta-llama/llama-3.3-70b-instruct:free"
-export MODEL_NAME="${MODEL_NAME_A}"
+# =============================================================================
+# These are filled automatically by setup.sh — do not edit manually.
+# =============================================================================
+export EVALHUB_ENDPOINT="http://localhost:${EVALHUB_LOCAL_PORT}"
+export EVALHUB_TOKEN=""
 
-# KubeFlow Pipelines endpoint (auto-detected if DSP is deployed)
-export KFP_ENDPOINT="https://ds-pipeline-dspa-workshop-workshop-eval.apps.ocp.CLUSTER.opentlc.com"
-
-# Path to this workshop directory (used by scripts to find .workshop-env)
+# Path to the workshop directory (used by scripts to locate other files)
 export WORKSHOP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

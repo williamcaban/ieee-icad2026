@@ -4,6 +4,9 @@
 # Workshop environment file — contains API keys, never commit
 .workshop-env
 
+# unusued steps for this particular workshop
+.attic
+
 # Generated configs (contain credentials)
 *-live.yaml
 /tmp/garak-*.yaml

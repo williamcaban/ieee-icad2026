@@ -1,0 +1,30 @@
+{
+  "results": {
+    "bbq_generate": {
+      "acc,none": 0.2,
+      "acc_stderr,none": 0.126491,
+      "accuracy_amb,none": 0.0,
+      "accuracy_amb_stderr,none": 0.0,
+      "accuracy_disamb,none": 0.4,
+      "accuracy_disamb_stderr,none": 0.21909,
+      "amb_bias_score,none": 0.333333,
+      "amb_bias_score_stderr,none": 0.16667
+    }
+  },
+  "group_subtasks": {},
+  "configs": {
+    "bbq_generate": {
+      "task": "bbq_generate",
+      "num_fewshot": 0,
+      "metric_list": ["acc", "accuracy_amb", "accuracy_disamb", "amb_bias_score"]
+    }
+  },
+  "versions": {"bbq_generate": 1},
+  "n-shot": {"bbq_generate": 0},
+  "date": "2026-06-01T12:00:00",
+  "model_source": "openai-chat-completions",
+  "model_name": "mock-model",
+  "model_name_sanitized": "mock-model",
+  "limit": 5,
+  "git_hash": "test-fixture"
+}

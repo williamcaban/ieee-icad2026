@@ -1,0 +1,26 @@
+{
+  "results": {
+    "mmlu_business_ethics_generative": {
+      "exact_match,none": 0.5,
+      "exact_match_stderr,none": 0.158114,
+      "exact_match_ignore_case,none": 0.5,
+      "exact_match_ignore_case_stderr,none": 0.158114
+    }
+  },
+  "group_subtasks": {},
+  "configs": {
+    "mmlu_business_ethics_generative": {
+      "task": "mmlu_business_ethics_generative",
+      "num_fewshot": 0,
+      "metric_list": ["exact_match"]
+    }
+  },
+  "versions": {"mmlu_business_ethics_generative": 1},
+  "n-shot": {"mmlu_business_ethics_generative": 0},
+  "date": "2026-06-01T12:00:00",
+  "model_source": "openai-chat-completions",
+  "model_name": "mock-model",
+  "model_name_sanitized": "mock-model",
+  "limit": 5,
+  "git_hash": "test-fixture"
+}

@@ -12,97 +12,154 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
   .callout { background: #1a2a1a; border-left: 4px solid #50fa7b; padding: 12px 16px; margin: 12px 0; }
   .analogy { background: #1a1a2e; border: 1px solid #7bc8f6; padding: 16px 20px; margin: 12px 0; border-radius: 6px; font-style: italic; }
+  .warning { background: #2a1a1a; border-left: 4px solid #f5a623; padding: 12px 16px; margin: 12px 0; }
+  .cite { font-size: 0.78em; color: #888; font-style: italic; }
 ---
 
-# Section 03 — IRR/IAA Custom Benchmark
+# Act 2 — Your Novel Contribution
 
 <div class="journey">
 
-`[ 01 Setup ]` → `[ 02 Local Eval ]` → `[ ● 03 IRR ]` → `[ 04 Kubernetes ]`
+`[ Act 1: Baseline ]` → `[ ● Act 2: Novel ]` → `[ Act 3: Compare ]`
 
 </div>
 
-**Question:** Can you trust the scores from Section 02? Only if you can trust the benchmark labels.
+**The question Act 1 leaves open:** the baseline you just ran measured the model against human-annotated labels. But *were those annotations reliable?* And if not — are yours?
 
 ---
 
-## The Problem with Labels
+## The Problem That Act 1 Doesn't Solve
 
-In Section 02 you got `bbq_generate acc = 0.20`.
-
-That score compares model outputs against *ground-truth labels* created by human annotators.
+In Act 1 you got `bbq_generate acc = 0.20`. That score compares model outputs against labels created by human annotators.
 
 **But what if the annotators disagreed?**
 
-If 3 annotators labelled the same text as `safe`, `unsafe`, and `ambiguous` — whose label is correct? The model's score is meaningless until you resolve this.
+If three annotators labelled the same text as `safe`, `unsafe`, and `ambiguous` — whose label is correct? The model's score is measuring label disagreement, not model safety.
+
+This is not a corner case. It is endemic to benchmark construction in safety and fairness evaluation. Most published benchmarks do not report inter-rater reliability.
+
+<div class="warning">
+
+A benchmark with low annotator agreement is not a benchmark — it is noise with a citation.
+
+</div>
 
 ---
 
-## The Intuition
+## Your Contribution: An IRR Quality Gate
+
+The methodology you are about to compute — **Inter-Rater Reliability analysis applied as a pre-registration quality gate** — is itself a research contribution.
+
+It answers: *before you run a model against this dataset, can you demonstrate that the labels are reliable enough to draw conclusions from?*
 
 <div class="analogy">
 
-Imagine two doctors labelling X-rays as "concerning" or "clear."  
-If they agree 95% of the time — trust the label.  
-If they agree 50% of the time — it's a coin flip.  
-The X-ray label becomes noise, not signal.
-
-**Krippendorff's Alpha** quantifies this for any number of annotators.
+Imagine two radiologists labelling X-rays as "concerning" or "clear."  
+If they agree 95% of the time: trust the label.  
+If they agree 50% of the time: the label is a coin flip.  
+**Krippendorff's Alpha** quantifies this for any number of annotators, any label type.
 
 </div>
 
-| α value | Interpretation |
-|---------|----------------|
-| α < 0.67 | Unreliable — do not use these labels |
-| 0.67 ≤ α < 0.80 | Acceptable — use with caution |
-| α ≥ 0.80 | Strong — high confidence in labels |
+This same reasoning applies to your safety annotation dataset. And proposing α ≥ 0.67 as the publication threshold — rather than just reporting it post-hoc — is a methodological proposal you can defend.
 
 ---
 
-## What You Produce
+## What IRR Analysis Produces
 
 ```
-annotations-sample.csv  ──► compute_irr.py  ──►  irr_report.json
-     │                                                  │
-  20 texts                   Cohen's Kappa         Clean benchmark
-  3 annotators            Krippendorff's Alpha    (excluded: ambiguous)
-  safe/unsafe/ambiguous   Ambiguous detection     Reliability embedded
+annotations-sample.csv ──► compute_irr.py ──► irr_report.json
+      │                                              │
+  20 texts              Cohen's Kappa (pairwise)  Clean benchmark spec
+  3 annotators          Krippendorff's Alpha      α embedded as metadata
+  safe/unsafe/ambiguous Ambiguous text detection  Excluded items listed
+                                                  Recommendation: REGISTER
 ```
 
-`irr_report.json` travels to Section 04 where it becomes a **registered cluster benchmark** — with the reliability evidence built in, auditable by anyone.
+`irr_report.json` is a **reproducibility artifact** — it contains the raw annotations, the computed metrics, the excluded items, and the decision. Anyone reading your benchmark can verify the α value without re-running your annotation pipeline.
 
 ---
 
-## Reading the Output
+## Interpreting the Output
 
 ```
   α = 0.8118  — STRONG — benchmark labels are reliable
-  κ (A1 vs A2) = 0.6694  (moderate)
-  κ (A2 vs A3) = 0.3750  (fair/poor)  ← investigate these two
+  κ (Annotator 1 vs 2) = 0.6694  (moderate)
+  κ (Annotator 2 vs 3) = 0.3750  (fair/poor)  ← investigate this pair
 ```
+
+| α value | Decision |
+|---------|----------|
+| α < 0.67 | Do not register — re-annotate or discard |
+| 0.67 ≤ α < 0.80 | Register with caution — document the uncertainty |
+| α ≥ 0.80 | Register — labels are reliable as ground truth |
 
 <div class="callout">
 
-Low kappa between A2 and A3 means they interpret the label boundary differently.  
-In production: run a calibration session before annotating more data.
+The pairwise κ between Annotators 2 and 3 (0.375) reveals a systematic disagreement on where the `safe`/`unsafe` boundary lies. In a production annotation pipeline, you would run a calibration session before annotating more data.
 
 </div>
-
-**α = 0.81** means: this benchmark can be used as ground truth with high confidence.  
-**α = 0.55** would mean: discard or re-annotate — scores against it measure label noise.
 
 ---
 
-## So What?
+## Registering the Novel Benchmark
 
-Every benchmark you use — BBQ, ToxiGen, TruthfulQA — was built by annotators who may or may not have agreed. IRR analysis is how you *audit* a benchmark before trusting it.
+Once α meets the threshold, register the benchmark in the local EvalHub — without `--dry-run`:
 
-When a regulator asks "how do you know your evaluation is valid?" — `irr_report.json` is part of the answer.
+```bash
+python3 scripts/register_benchmark.py
+```
+
+Then run it against the same model used in Act 1:
+
+```bash
+evalhub eval run \
+  --provider lm_evaluation_harness \
+  --benchmark icad2026-irr-safety \
+  --model-url "${MODEL_ENDPOINT}" \
+  --model-name "${MODEL_NAME}" \
+  --param limit=5 --wait
+```
+
+**Why the same model?** Because Act 3 compares your novel benchmark against the baseline on equal footing — same model, same infrastructure, same evaluation framework.
+
+---
+
+## The Reliability Evidence Is in the Benchmark
+
+```json
+{
+  "spec": {
+    "irr_metadata": {
+      "krippendorff_alpha": 0.8118,
+      "alpha_threshold": 0.67,
+      "pairwise_kappa": { "A1_vs_A2": 0.67, "A1_vs_A3": 0.53, "A2_vs_A3": 0.38 },
+      "ambiguous_excluded": 0,
+      "recommendation": "REGISTER"
+    }
+  }
+}
+```
+
+The reliability evidence travels with the benchmark. Anyone who runs `evalhub benchmarks show icad2026-irr-safety` sees the α value, the annotator pairs, the threshold — not a link to a separate PDF.
+
+This is what "reproducible" means in practice.
+
+---
+
+## What You Have Built
+
+✅ IRR analysis on a real annotation dataset (Cohen's κ + Krippendorff's α)  
+✅ A principled exclusion decision — ambiguous texts filtered, not silently dropped  
+✅ Benchmark registered in EvalHub with reliability metadata embedded  
+✅ Novel benchmark results against the same model as Act 1  
+✅ `results/novel_results.json` — the Act 3 comparison input
 
 <div class="callout">
 
-🔁 **Reuse pattern:** `compute_irr.py` works with any annotation CSV (same column structure). Replace `annotations-sample.csv` with your own research data. The α threshold is configurable.
+**→ Act 3:** Both baseline and novel results now exist in EvalHub.  
+A Python/Jupyter notebook calls the MCP server to retrieve them, compare them, and produce a publication-ready figure — without any MCP client framework.
 
 </div>
 
-**→ Section 04:** Same `evalhub` CLI, different `base_url` — now pointing at the cluster.
+<p class="cite">Reuse pattern: compute_irr.py works with any annotation CSV of the same structure. Replace the sample data with your own research annotations. The α threshold is configurable at the top of the script.</p>

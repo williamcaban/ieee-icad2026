@@ -49,12 +49,29 @@ else
   source "${WORKSHOP_ENV_FILE}"
 fi
 
-# Validate OpenRouter key
-if [[ -z "${OPENROUTER_API_KEY:-}" || "${OPENROUTER_API_KEY}" == *"REPLACE"* ]]; then
-  warn "OPENROUTER_API_KEY is not set. Sections 01-02 will not work without it."
-  warn "Edit ${WORKSHOP_ENV_FILE} and add your key, then re-run this script."
+# Validate model endpoint configuration
+if [[ -z "${MODEL_ENDPOINT:-}" ]]; then
+  warn "MODEL_ENDPOINT is not set. Edit ${WORKSHOP_ENV_FILE} and choose an endpoint."
+  warn "Options: OpenRouter (cloud, free), Ollama (local), or vLLM."
 else
-  ok "OPENROUTER_API_KEY is set (${#OPENROUTER_API_KEY} chars)."
+  ok "MODEL_ENDPOINT: ${MODEL_ENDPOINT}"
+fi
+if [[ -z "${MODEL_NAME:-}" ]]; then
+  warn "MODEL_NAME is not set. Edit ${WORKSHOP_ENV_FILE}."
+else
+  ok "MODEL_NAME: ${MODEL_NAME}"
+fi
+# Ensure OPENAI_API_KEY is set — lm-eval uses this as the auth header regardless of provider
+if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+  if [[ -n "${OPENROUTER_API_KEY:-}" && "${OPENROUTER_API_KEY}" != *"REPLACE"* ]]; then
+    export OPENAI_API_KEY="${OPENROUTER_API_KEY}"
+    ok "OPENAI_API_KEY set from OPENROUTER_API_KEY."
+  else
+    warn "OPENAI_API_KEY not set. lm-eval requires this. Set it in ${WORKSHOP_ENV_FILE}."
+    warn "For Ollama, set: export OPENAI_API_KEY=ollama"
+  fi
+else
+  ok "OPENAI_API_KEY is set."
 fi
 
 # =============================================================================
@@ -124,142 +141,36 @@ echo "  Stop: kill \$(cat /tmp/evalhub-local.pid)"
 echo ""
 
 # =============================================================================
-# Step 4: Configure evalhub CLI for cluster (Section 04 — optional now)
+# Step 4: Install evalhub-mcp binary (needed for Act 3 — Section 04)
 # =============================================================================
-info "Checking cluster access for Section 04..."
+info "Checking evalhub-mcp installation..."
 
-if ! oc whoami >/dev/null 2>&1; then
-  warn "Not logged in to OpenShift — cluster config skipped (needed for Section 04 only)."
-  warn "Log in before Section 04: oc login <cluster-api>"
+if command -v evalhub-mcp >/dev/null 2>&1; then
+  ok "evalhub-mcp: $(evalhub-mcp --version 2>/dev/null || echo 'installed')"
 else
-  # Auto-detect EvalHub endpoint and refresh token
-  EVALHUB_ROUTE=$(oc get route workshop-evalhub -n "${WORKSHOP_NAMESPACE}" \
-    -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-  EVALHUB_TOKEN=$(oc create token workshop-sa -n "${WORKSHOP_NAMESPACE}" \
-    --duration=8h 2>/dev/null || echo "")
-  KFP_ROUTE=$(oc get route ds-pipeline-dspa-workshop -n "${WORKSHOP_NAMESPACE}" \
-    -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-
-  if [[ -n "${EVALHUB_ROUTE}" ]]; then
-    export EVALHUB_ENDPOINT="https://${EVALHUB_ROUTE}"
-
-    # Update .workshop-env with live values
-    grep -v "^export EVALHUB_ENDPOINT\|^export EVALHUB_TOKEN\|^export KFP_ENDPOINT" \
-      "${WORKSHOP_ENV_FILE}" > /tmp/wenv_tmp && mv /tmp/wenv_tmp "${WORKSHOP_ENV_FILE}"
-    {
-      echo "export EVALHUB_ENDPOINT=\"https://${EVALHUB_ROUTE}\""
-      echo "export EVALHUB_TOKEN=\"${EVALHUB_TOKEN}\""
-      [[ -n "${KFP_ROUTE}" ]] && echo "export KFP_ENDPOINT=\"https://${KFP_ROUTE}\""
-    } >> "${WORKSHOP_ENV_FILE}"
-    chmod 600 "${WORKSHOP_ENV_FILE}"
-
-    # ==========================================================================
-    # Grant workshop-sa the RBAC needed for EvalHub API (SubjectAccessReview
-    # checks these virtual resources: collections, providers, evaluations).
-    # ==========================================================================
-    info "Applying EvalHub RBAC for workshop-sa..."
-    oc apply -f - >/dev/null <<RBACEOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: workshop-sa-evalhub-collections
-  namespace: ${WORKSHOP_NAMESPACE}
-  labels:
-    workshop: icad2026
-subjects:
-- kind: ServiceAccount
-  name: workshop-sa
-  namespace: ${WORKSHOP_NAMESPACE}
-roleRef:
-  kind: ClusterRole
-  name: trustyai-service-operator-evalhub-collections-access
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: workshop-sa-evalhub-providers
-  namespace: ${WORKSHOP_NAMESPACE}
-  labels:
-    workshop: icad2026
-subjects:
-- kind: ServiceAccount
-  name: workshop-sa
-  namespace: ${WORKSHOP_NAMESPACE}
-roleRef:
-  kind: ClusterRole
-  name: trustyai-service-operator-evalhub-providers-access
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: workshop-sa-lmeval-user
-  namespace: ${WORKSHOP_NAMESPACE}
-  labels:
-    workshop: icad2026
-subjects:
-- kind: ServiceAccount
-  name: workshop-sa
-  namespace: ${WORKSHOP_NAMESPACE}
-roleRef:
-  kind: ClusterRole
-  name: trustyai-service-operator-lmeval-user-role
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: workshop-evalhub-evaluations-access
-  namespace: ${WORKSHOP_NAMESPACE}
-  labels:
-    workshop: icad2026
-rules:
-- apiGroups: ["trustyai.opendatahub.io"]
-  resources: ["evaluations"]
-  verbs: ["get","list","create","update","patch","delete"]
-- apiGroups: ["mlflow.kubeflow.org"]
-  resources: ["experiments"]
-  verbs: ["get","list","create"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: workshop-sa-evalhub-evaluations
-  namespace: ${WORKSHOP_NAMESPACE}
-  labels:
-    workshop: icad2026
-subjects:
-- kind: ServiceAccount
-  name: workshop-sa
-  namespace: ${WORKSHOP_NAMESPACE}
-roleRef:
-  kind: Role
-  name: workshop-evalhub-evaluations-access
-  apiGroup: rbac.authorization.k8s.io
-RBACEOF
-    ok "EvalHub RBAC applied."
-
-    # Store cluster endpoint for Section 04 (do NOT reconfigure CLI — keep it on localhost for now)
-    export EVALHUB_CLUSTER_ENDPOINT="https://${EVALHUB_ROUTE}"
-    grep -v "^export EVALHUB_CLUSTER_ENDPOINT" "${WORKSHOP_ENV_FILE}" > /tmp/wenv_tmp && mv /tmp/wenv_tmp "${WORKSHOP_ENV_FILE}"
-    echo "export EVALHUB_CLUSTER_ENDPOINT=\"https://${EVALHUB_ROUTE}\"" >> "${WORKSHOP_ENV_FILE}"
-    ok "Cluster EvalHub endpoint stored: https://${EVALHUB_ROUTE}"
-    info "CLI stays pointed at local server for Sections 01-03. Section 04 switches to cluster."
-
-    if evalhub health 2>/dev/null | grep -qi "healthy\|ok"; then
-      ok "EvalHub is healthy."
-      DASHBOARD_ROUTE=$(oc get route rhods-dashboard -n redhat-ods-applications \
-        -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-      echo ""
-      echo "  EvalHub API: https://${EVALHUB_ROUTE}"
-      [[ -n "${DASHBOARD_ROUTE}" ]] && echo "  RHOAI Dashboard: https://${DASHBOARD_ROUTE}"
-    else
-      warn "EvalHub health check failed. Run 'evalhub health' to diagnose."
-    fi
+  info "Installing evalhub-mcp via Homebrew..."
+  if command -v brew >/dev/null 2>&1; then
+    brew install eval-hub/evalhub/evalhub-mcp 2>/dev/null && \
+      ok "evalhub-mcp installed via Homebrew." || \
+      warn "Homebrew install failed. Try the GitHub release fallback in 04-mcp-compare/setup.sh"
   else
-    warn "Could not find workshop-evalhub route in namespace ${WORKSHOP_NAMESPACE}."
+    warn "Homebrew not found. Run 04-mcp-compare/setup.sh for a GitHub release install."
   fi
+fi
+
+# =============================================================================
+# Step 5: Configure evalhub CLI for cluster (optional — closing demo only)
+# =============================================================================
+# Cluster access is NOT required for any hands-on section of this workshop.
+# The Kubernetes demo in the closing segment uses a pre-recorded video.
+# If you have cluster access and want to test it, log in with: oc login <api>
+# The 04-mcp-compare/lab.md has the cluster switch instructions.
+
+if command -v oc >/dev/null 2>&1 && oc whoami >/dev/null 2>&1; then
+  info "Cluster access detected (optional — not needed for the workshop lab)."
+  # Cluster config lives in setup/platform-setup.sh — not run here
+else
+  info "No cluster access — all workshop sections run locally. That's expected."
 fi
 
 # =============================================================================
@@ -269,8 +180,9 @@ echo ""
 echo "============================================================"
 echo "  Section 01 setup complete."
 echo ""
-echo "  Local EvalHub server running at: http://localhost:${EVALHUB_LOCAL_PORT}"
-echo "  Providers: lm_evaluation_harness, garak"
+echo "  Local EvalHub: http://localhost:${EVALHUB_LOCAL_PORT}"
+echo "  Providers:     lm_evaluation_harness, garak"
+echo "  Model:         ${MODEL_NAME:-<not set>} @ ${MODEL_ENDPOINT:-<not set>}"
 echo ""
 echo "  Next: source .workshop-env && cd ../02-local-evaluation"
 echo "============================================================"

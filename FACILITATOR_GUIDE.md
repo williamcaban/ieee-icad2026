@@ -1,201 +1,304 @@
 # Facilitator Guide — Guardrails Under Pressure
 
-**IEEE ICAD 2026 Workshop**
-For workshop organizers and teaching assistants only.
+**IEEE ICAD 2026** · 105 minutes · All local — no Kubernetes cluster required  
+*For workshop facilitators and teaching assistants.*
 
 ---
 
-## Pre-Workshop Checklist
+## Quick Reference
 
-Complete all items at least 24 hours before the workshop starts.
-
-### Cluster Provisioning (T-24h)
-
-- [ ] OpenShift cluster is running and accessible at the workshop API endpoint.
-- [ ] RHOAI 2.10+ operator is installed and `DataScienceCluster` CR is in `Ready` state.
-- [ ] EvalHub operator is installed from OperatorHub or the RHOAI add-ons catalog.
-- [ ] `workshop-eval` namespace exists and EvalHub CR is `Ready`.
-- [ ] Model serving endpoint for `granite-3-2b` (or equivalent <8B model) is deployed and responding.
-- [ ] KubeFlow Pipelines is enabled in the `DataScienceCluster` CR.
-- [ ] Run `bash setup/platform-setup.sh` and confirm zero errors.
-- [ ] Run `bash setup/verify-environment.sh` and confirm all checks pass.
-
-### Participant Access (T-24h)
-
-- [ ] Each participant has credentials for the workshop cluster (or uses a shared kubeconfig).
-- [ ] Cluster RBAC allows participants to create, get, list, watch in `workshop-eval` namespace.
-- [ ] Participants cannot delete or modify the EvalHub operator or model serving deployment.
-- [ ] Network policy allows participant machines to reach the cluster API and model route.
-
-### Workshop Materials (T-2h)
-
-- [ ] Repository URL distributed to participants in advance.
-- [ ] Slide deck loaded and display tested.
-- [ ] `~/.workshop-env` template file reviewed (ensure `EVALHUB_ENDPOINT` and `MODEL_ENDPOINT` are correct for the actual workshop cluster).
-- [ ] Garak scan pre-run against the model to confirm probe results are non-trivial (model actually produces some flagged outputs).
-- [ ] KubeFlow pipeline endpoint tested: `kfp pipeline list` returns without error.
-- [ ] Printed reference cards (OWASP LLM Top 10, AVID taxonomy) available if connectivity to resources/ is slow.
-
-### Day-Of Setup (T-30 min)
-
-- [ ] Projector connected and screen sharing tested.
-- [ ] Timer visible to facilitator.
-- [ ] Teaching assistants briefed: one per 10-15 participants recommended.
-- [ ] `reset.sh` scripts tested for each section — confirm idempotent.
-- [ ] Pre-built garak report saved to `03-safety-evaluation/sample-garak-report/` as backup.
-- [ ] Pre-generated `irr_report.json` saved to `05-irr-benchmark/sample-output/` as backup.
+| Duration | Section | Key output |
+|----------|---------|------------|
+| 10 min | Opening presentation | Context set; three-act arc established |
+| 12 min | 01 Setup | `eval-hub-server` running; `evalhub-mcp` installed |
+| 22 min | Act 1 — Baseline Replication | `baseline_summary.json`; bias + adversarial scores in EvalHub |
+| 10 min | Break + Q&A | Verify MCP server; field concept questions |
+| 18 min | Act 2 — Novel Contribution | IRR benchmark registered; `novel_results.json` |
+| 23 min | Act 3 — MCP Research Interface | `comparison_plot.png`; `comparison_report.json` |
+| 10 min | Closing discussion | Kubernetes demo (pre-recorded); research checklist; Q&A |
 
 ---
 
-## Timing Tips
+## Pre-Workshop Checklist (48 hours before)
 
-### Opening (0:00 — 0:12)
+### Environment validation
 
-Spend the first 4 minutes on OWASP LLM Top 10 — participants will reference this throughout the lab. The Garak-to-OWASP mapping table in `resources/owasp-llm-top10-quick-ref.md` is the bridge from theory to practice.
+- [ ] Clone the workshop repo: `git clone https://github.com/williamcaban/ieee-icad2026.git`
+- [ ] Run `uv sync && source .venv/bin/activate`
+- [ ] Edit `.workshop-env` — set `MODEL_ENDPOINT`, `MODEL_NAME`, and your API key (see Model Endpoint Options below)
+- [ ] Run `bash 01-setup/setup.sh` end-to-end and verify no errors
+- [ ] Confirm `evalhub health` returns `{"status": "healthy"}`
+- [ ] Confirm `evalhub providers list` shows `lm_evaluation_harness` and `garak`
+- [ ] Test a real eval: `evalhub eval run --provider lm_evaluation_harness --benchmark bbq_generate --param limit=2 --wait`
+- [ ] Verify `evalhub-mcp --version` works
+- [ ] Run `bash 04-mcp-compare/setup.sh` and verify `curl http://localhost:3001/health` responds
+- [ ] Run `uv run pytest tests/ -v` — all unit tests should pass; smoke tests may skip if HF offline
 
-Spend minutes 5-9 on EvalHub architecture. Key points:
-- EvalHub uses Kubernetes CRs (Collection, EvalRun, Benchmark) — not a separate service to call.
-- Collections are reusable — define once, run repeatedly against different models.
-- Results are stored as structured JSON in the EvalHub API, accessible via CLI or REST.
+### Pre-recorded Kubernetes demo
 
-Spend the last 3 minutes on the workshop structure and what participants will build. Show the repo README.
+The closing segment references production-scale deployment on Kubernetes (RHOAI). Since no cluster is provisioned during this workshop, prepare a short (2–3 min) screen recording:
 
-### Section 01 (0:12 — 0:20)
+- [ ] Submit an eval job to a live EvalHub on RHOAI: `evalhub eval run --benchmark bbq_generate ...`
+- [ ] Show the RHOAI Dashboard Evaluations tab with the LMEvalJob running
+- [ ] Show `evalhub eval results <job-id>` returning scores from the cluster
+- [ ] Point out: same benchmark IDs, same CLI commands, same `mcp_client.py` notebook — only `base_url` changes
 
-This is a connectivity and orientation section. The main risk is participants who cannot reach the cluster. Have a teaching assistant circulate to fix kubeconfig issues immediately. Do not let one person's connectivity problem block the group's progress past minute 17.
+Upload as an unlisted video or keep the file available for offline playback.
 
-Key verification command to show on screen:
+### Slides
+
+- [ ] Render all slides: `for f in slides/0*.md; do marp "$f"; done`  
+  Or open in Marp Desktop and export to PDF/HTML for presentation.
+- [ ] Verify slide 8 in `00-opening.md` (Architecture) shows no cluster references in the local diagram
+- [ ] Have `resources/owasp-llm-top10-quick-ref.md` ready to share as a handout for Act 1
+- [ ] Have `resources/governance-checklist.md` ready for the closing segment
+
+---
+
+## Model Endpoint Options
+
+The workshop is designed for **any OpenAI-compatible chat completions endpoint**. Configure `MODEL_ENDPOINT` and `MODEL_NAME` in `.workshop-env` before the session begins.
+
+| Provider | Notes | Example `.workshop-env` values |
+|----------|-------|-------------------------------|
+| **OpenRouter** (recommended for workshops) | Free tier, no local GPU, cloud inference | `MODEL_ENDPOINT=https://openrouter.ai/api/v1` · `MODEL_NAME=liquid/lfm-2.5-1.2b-instruct:free` · `OPENROUTER_API_KEY=sk-or-...` |
+| **Ollama** (offline / no API key) | `ollama pull llama3.2:3b` before the session; `ollama serve` must be running | `MODEL_ENDPOINT=http://localhost:11434/v1` · `MODEL_NAME=llama3.2:3b` · `OPENAI_API_KEY=ollama` |
+| **vLLM** (local or institutional) | Start vLLM server pointing at a quantised model | `MODEL_ENDPOINT=http://localhost:8000/v1` · `MODEL_NAME=<model-id>` |
+
+**Important for Ollama:** lm_eval uses `OPENAI_API_KEY` as the Authorization header. Ollama accepts any non-empty value. Set it to `"ollama"` to avoid auth errors.
+
+**Participant API keys:** If using OpenRouter, have participants create a free account at openrouter.ai/keys before the workshop. The free tier allows 20 req/min — sufficient for `limit=5` evaluations with pacing.
+
+---
+
+## Opening Presentation (10 min)
+
+Slides: `slides/00-opening.md`
+
+### Delivery notes by slide
+
+**Slide 2 — Production failures:** Do not rush this. Ask: "Has anyone seen a model behave differently in production than during evaluation?" Wait for one or two responses. These personal anecdotes set the stage for why the session exists.
+
+**Slide 3 — Industry scope:** Emphasise that the HELM finding (11/30 models with hidden demographic bias) used _aggregate_ scores that looked acceptable. The problem isn't that researchers don't evaluate — it's that aggregate scores hide subgroup failures.
+
+**Slide 4 — Replicability:** The conceptual pivot for a research audience. Key line: "If you can't reproduce the baseline, you have no baseline — you have a claim." Give this a beat.
+
+**Slide 5 — Researcher's dilemma:** Frame the three-act structure as what the participant would personally need to do to publish a novel safety benchmark. This is not a tutorial — it is a research workflow they are executing.
+
+**Slide 8 — Architecture:** Emphasise "no cluster" explicitly. Many participants will be relieved. The Kubernetes mention is forward context only. Say: "We have a pre-recorded demo of the cluster workflow for the closing segment. Today is entirely local."
+
+**Slide 10 — Start Section 01:** Give participants 30 seconds to open a terminal before moving on.
+
+---
+
+## Section 01 — Setup (12 min)
+
+Slides: `slides/01-setup-slides.md`  
+Lab: `01-setup/lab.md`
+
+### Common issues and fixes
+
+| Issue | Likely cause | Fix |
+|-------|-------------|-----|
+| `lm_eval: command not found` | venv not activated | `cd <repo-root> && source .venv/bin/activate` |
+| `garak: command not found` | Same | Same |
+| `MODEL_ENDPOINT not set` | `.workshop-env` not edited | Edit `.workshop-env`, set endpoint and key, re-run `bash setup.sh` |
+| `eval-hub-server` fails to start | Port 18080 in use | `lsof -ti:18080 \| xargs kill -9`, then re-run |
+| `evalhub-mcp` not found | Homebrew not installed | `bash 04-mcp-compare/setup.sh` runs a GitHub release fallback |
+| `evalhub health` times out | Server still starting | Wait 10 s and retry; check `/tmp/evalhub-local.log` |
+| Ollama not responding | `ollama serve` not started | `ollama serve &` in another terminal |
+
+---
+
+## Act 1 — Baseline Replication (22 min)
+
+Slides: `slides/02-local-eval-slides.md`  
+Lab: `02-local-evaluation/lab.md`
+
+### Timing guide
+
+| Sub-section | Duration |
+|-------------|----------|
+| Track A — BBQ bias (`bbq_generate`, limit=5) | 7 min running + 3 min interpretation |
+| Track A — MMLU ethics (`mmlu_business_ethics_generative`) | 4 min running |
+| Track B — Garak adversarial probes | 6 min running + 2 min discussion |
+
+Advanced participants can run Track A and B in parallel. Direct them to start Track B (`evalhub eval run --provider garak ...`) while Track A is running.
+
+### Key teaching moments
+
+**BBQ score = 0.20, amb_bias_score = 0.33:** Ask: "What does this mean for a hiring tool?" Let one person answer. Then: "This is the community-accepted benchmark. Your baseline is positioned relative to what peer literature uses — that's the point of replication."
+
+**Garak adversarial output:** Warn participants before they run it. The model will produce harmful text — this is expected, intentional, and is exactly the point of adversarial evaluation. The probe is peer-reviewed and reproducible.
+
+**"Why these benchmarks?"** — BBQ (Parrish et al. 2022), MMLU (Hendrycks et al. 2021), and Garak (Derczynski et al. 2024) are each cited in peer-reviewed work. Running them against your model gives you a baseline position relative to the existing literature.
+
+### Rate limiting (OpenRouter free tier)
+
+If participants see `429 Too Many Requests`:
+- Reduce limit: add `--param limit=3`
+- The free tier resets every 60 seconds; wait and retry
+- If the whole room hits limits simultaneously, stagger starts by 30 seconds
+
+### Recovery
+
+| Problem | Recovery |
+|---------|---------|
+| `eval-hub-server` stopped | `bash 01-setup/setup.sh` |
+| Garak hangs | Kill the process; use `--param generations=1` |
+| HuggingFace dataset download fails | Check internet; use `--param limit=1`; check `HF_DATASETS_OFFLINE` env var |
+| BBQ task not found | Verify `lm-eval>=0.4` installed; `lm_eval --tasks list \| grep bbq` |
+
+---
+
+## Break (10 min)
+
+During the break:
+- [ ] Verify `evalhub health` — server still healthy
+- [ ] Verify `curl -s http://localhost:3001/health` — MCP server responding  
+  If not: `bash 04-mcp-compare/setup.sh` to restart it
+- [ ] Field any architecture or concept questions
+- [ ] Confirm that participants who fell behind have at least started Track A
+
+---
+
+## Act 2 — Novel Contribution (18 min)
+
+Slides: `slides/03-irr-slides.md`  
+Lab: `03-irr-local/lab.md`
+
+### Timing guide
+
+| Step | Duration |
+|------|----------|
+| Inspect annotation dataset | 2 min |
+| Run `compute_irr.py` + read output | 4 min |
+| Register benchmark (no `--dry-run`) | 3 min |
+| Run novel benchmark via `evalhub eval run` | 6 min |
+| Checkpoint + discussion | 3 min |
+
+### Key teaching moments
+
+**The α value (0.81):** Walk through the output line by line with the group.
+- α = 0.81: "This benchmark meets the quality bar. We register it."
+- κ (Annotator 2 vs 3) = 0.38: "These two annotators see the label boundary differently. In a real annotation pipeline, you would run a calibration session before annotating more data."
+
+**The research contribution framing:** Say explicitly: "You just proposed that α ≥ 0.67 is the registration threshold. That is a methodological contribution. Publishing that threshold, with the evidence, is what makes the benchmark citable — not just the score."
+
+**Registration without `--dry-run`:** This is the critical change from the previous session format. The benchmark must be registered — not just previewed — so Act 3 can query it via MCP.
+
 ```bash
-oc get evalhub -n workshop-eval
+# Critical: no --dry-run
+python3 scripts/register_benchmark.py
+
+# Verify registration succeeded
+evalhub benchmarks list    # should show icad2026-irr-safety
 ```
 
-Expected output:
-```
-NAME            READY   AGE
-workshop-eval   True    2d
-```
+### Recovery
 
-### Section 02 (0:20 — 0:30)
+| Problem | Recovery |
+|---------|---------|
+| `irr_report.json` missing | Run `python3 scripts/compute_irr.py` first |
+| `register_benchmark.py` fails | Check `evalhub health`; verify JSON is valid |
+| Novel benchmark run fails | Verify benchmark registered: `evalhub benchmarks list` |
+| α below 0.67 | Step 4 (optional): modify one CSV row to observe exclusion, then `bash reset.sh` |
 
-`evalhub collection list` is the key orientation moment. Show participants the `safety-and-fairness-v1` entry and note that it covers 6 benchmarks. This prepares them for Section 03.
+---
 
-If pip install is slow due to conference Wi-Fi, have participants install from a local PyPI mirror:
+## Act 3 — MCP Research Interface (23 min)
+
+Slides: `slides/04-mcp-slides.md`  
+Lab: `04-mcp-compare/lab.md`
+
+### Timing guide
+
+| Step | Duration |
+|------|----------|
+| Setup + verify MCP server | 3 min |
+| Open notebook or script; walk through `mcp_client.py` | 3 min |
+| Cell 1: configure approaches | 2 min |
+| Cells 2–4: connect, submit, poll | 8 min |
+| Cells 5–8: extract, table, plot, export | 5 min |
+| Discussion | 2 min |
+
+### The `mcp_client.py` walk-through
+
+Before participants start, put `mcp_client.py` on the projector:
+
+> "This is the entire MCP client. Fifty lines. No SDK, no async library, no framework. It is `requests` and JSON-RPC 2.0. You could have written this yourself — and after today, you can adapt it to any EvalHub instance."
+
+This is the central claim of Act 3: MCP is just HTTP + JSON. Researchers who understand HTTP understand MCP.
+
+### Notebook vs. standalone script
+
+| | Notebook (`compare_approaches.ipynb`) | Script (`compare_approaches.py`) |
+|-|---------------------------------------|----------------------------------|
+| Best for | Interactive exploration, per-cell inspection | Participants without Jupyter; CI/CD |
+| Output | Same files (`comparison_plot.png`, `comparison_report.json`) | Same files |
+| How to run | Open in JupyterLab or VS Code; run all cells | `python3 compare_approaches.py` |
+
+Both are provided. Participants choose whichever fits their workflow.
+
+### MCP server pre-flight
+
+Before Act 3 starts, verify the MCP server is still running:
+
 ```bash
-pip install evalhub --index-url http://pypi-mirror.workshop-local/simple/
+curl http://localhost:3001/health
+# Expected: {"status": "ok", "tools": ["submit_evaluation", "get_job_status", "cancel_job"]}
 ```
 
-Pre-stage this URL in the room's printed guide if the venue has unstable internet.
+If it's not running: `bash 04-mcp-compare/setup.sh`
 
-### Section 03 (0:30 — 0:52)
+### Recovery
 
-This is the most important section. Allocate your teaching assistant attention here.
-
-**Track A** (evalhub run): The main risk is a long evaluation queue. The workshop cluster is configured with priority class `workshop-high` on evaluation jobs, so runs should start within 30 seconds. If not, show the pre-generated output from `resources/sample-outputs/safety-and-fairness-v1-run.json`.
-
-**Track B** (Garak): Garak scans can take 3-6 minutes for 6 probes against a remote REST endpoint. Start Track B as soon as participants finish Track A setup — the runs can proceed in parallel. The `garak-config.yaml` limits `max_tokens` to 128 to keep scan time reasonable.
-
-If a participant gets stuck on the OWASP mapping, direct them to `resources/owasp-llm-top10-quick-ref.md` — the Garak probe column directly answers "which probe tests this threat."
-
-### Mid-Session Break (0:52 — 1:02)
-
-Use this time to:
-1. Answer questions from Sections 01-03.
-2. Help any participant who is more than one section behind.
-3. Verify the KubeFlow Pipelines endpoint is ready (run `kfp pipeline list` from the facilitator terminal).
-4. Check that Section 04 custom collection configs are readable (no YAML syntax errors).
-
-Announce the break end at 1:01 — give participants a 60-second warning.
-
-### Section 04 (1:02 — 1:17)
-
-The threshold block in `custom-safety-collection.yaml` is the conceptual centerpiece. Walk through the YAML structure briefly before participants run the setup script. Emphasize: thresholds are policy — they encode what "safe enough" means for a specific use case.
-
-A common error: participants forget to substitute their model endpoint into the YAML. The `setup.sh` does this via `envsubst`, but only if `MODEL_ENDPOINT` is set. Remind participants to `source ~/.workshop-env` first.
-
-### Section 05 (1:17 — 1:30)
-
-`compute_irr.py` produces a results table that often surprises participants: annotators agree less than they expect on edge cases. This is the "aha" moment for IAA in bias evaluation. Allow 2 minutes for participants to read the disagreement table before running `register_benchmark.py`.
-
-If the EvalHub API endpoint returns 401 for `register_benchmark.py`, check that `EVALHUB_TOKEN` is set in `~/.workshop-env`. This token is pre-configured in the workshop cluster's service account.
-
-### Section 06 (1:30 — 1:40)
-
-This section is conceptually complex but mechanically short. Participants who understand the pipeline architecture (evaluate → compare → route) will get the most value. Focus on the `compare_scores` component output — it is the decision boundary.
-
-If KFP is unreachable, show the compiled `pipeline.yaml` and walk through it. The routing decision logic in `route_traffic` is the key learning, not the KFP mechanics.
-
-### Closing (1:40 — 1:45)
-
-Do not skip this. The governance checklist is the bridge between "I ran these tools" and "I can defend this evaluation to an auditor." Mention EU AI Act Article 9 (risk management) and Article 13 (transparency) explicitly — these resonate with the IEEE audience.
-
-End with a call to action: the `resources/governance-checklist.md` is something participants can bring back to their organizations as a starting template.
+| Problem | Recovery |
+|---------|---------|
+| MCP server not responding | `bash 04-mcp-compare/setup.sh`; verify with `curl` |
+| `icad2026-irr-safety` not found | Participant skipped Act 2 — run `cd 03-irr-local && python3 scripts/register_benchmark.py` |
+| Job stuck in RUNNING | `mcp.cancel_job(job_id)` in notebook; resubmit |
+| `matplotlib` import fails | `uv sync` in repo root |
+| Jupyter not found | Use `compare_approaches.py` instead |
 
 ---
 
-## Common Issues and Solutions
+## Closing Discussion (10 min)
 
-### Participant cannot connect to cluster
+### Agenda
 
-**Symptom**: `oc get nodes` returns `connection refused` or timeout.
+1. **Pre-recorded Kubernetes demo** (3 min): show the cluster workflow — same benchmark IDs, same CLI commands, same `mcp_client.py` notebook. Emphasise that `base_url` is the only change.
 
-**Solutions**:
-1. Verify VPN or direct network path to cluster API (`curl -k https://<cluster-api>:6443/healthz`).
-2. Distribute pre-built kubeconfig via USB or local file share.
-3. Pair participant with a neighbor who has connectivity.
+2. **Research publication checklist** (3 min): walk through `resources/governance-checklist.md`. Map each workshop artifact to a claim that can appear in a methods section or supplementary material:
+   - `baseline_summary.json` → "We replicated [benchmark] using [lm-eval version] against [model]"
+   - `irr_report.json` → "Labels meet the α ≥ 0.67 threshold (α = [value])"
+   - `comparison_report.json` + `comparison_plot.png` → "Figure N shows our novel approach vs. baseline on the same model and infrastructure"
 
-### EvalHub CR shows `Ready: False`
+3. **Q&A** (4 min)
 
-**Symptom**: `oc get evalhub -n workshop-eval` shows `READY: False`.
+### Common closing questions
 
-**Solutions**:
-1. Check operator logs: `oc logs -n openshift-operators deployment/evalhub-operator-controller-manager`.
-2. Common cause: EvalHub storage PVC pending. Check `oc get pvc -n workshop-eval`.
-3. If unresolvable within 3 minutes, switch to `EVALHUB_ENDPOINT=http://mock-endpoint:8080` and continue with mock responses.
+**"Can I use my own model?"** Yes — any OpenAI-compatible endpoint. Change `MODEL_ENDPOINT` and `MODEL_NAME` in `.workshop-env`. No code changes.
 
-### Garak installation fails
+**"Can I use my own annotation dataset?"** Yes — replace `data/annotations-sample.csv` with any CSV that has the same column structure (`text_id`, `text`, `annotator_1`, `annotator_2`, `annotator_3`). The α threshold is configurable at the top of `compute_irr.py`.
 
-**Symptom**: `pip install garak` fails or takes too long.
+**"Can I add more annotators?"** Yes — add columns `annotator_4`, etc. The `compute_irr.py` script uses all columns that match the `annotator_*` pattern.
 
-**Solutions**:
-1. Use pre-installed garak in the workshop Python virtualenv: `source /opt/workshop/venv/bin/activate`.
-2. Run with offline wheel: `pip install --no-index --find-links /opt/workshop/wheels/ garak`.
+**"How do I run this at scale against my institution's cluster?"** The pre-recorded demo covers this. The key: `evalhub config set base_url <cluster-url>` switches the CLI from local to cluster. The `mcp_client.py` notebook changes one line: `EvalHubMCPClient(url="<cluster-url>")`.
 
-### Model endpoint returns 503
-
-**Symptom**: `curl $MODEL_ENDPOINT/v1/health` returns 503.
-
-**Solutions**:
-1. Check vLLM serving pod: `oc get pods -n workshop-eval -l app=granite-3-2b`.
-2. If pod is CrashLoopBackOff, the model may have been evicted. Trigger re-deploy: `oc rollout restart deployment/granite-3-2b -n workshop-eval`.
-3. If model is down for more than 5 minutes, switch to a pre-recorded Garak scan report.
-
-### KubeFlow pipeline upload fails
-
-**Symptom**: `kfp pipeline upload pipeline.yaml` returns authentication error.
-
-**Solutions**:
-1. Ensure `KFP_ENDPOINT` is set: `echo $KFP_ENDPOINT`.
-2. Check KFP cookie: `kfp auth` (if using the workshop KFP auth token).
-3. Upload via KFP UI instead: open `$KFP_ENDPOINT`, click "Pipelines" > "Upload pipeline", select `pipeline.yaml`.
+**"Is the MCP server stable?"** The binary (`evalhub-mcp`) is stable. For production, run it as a container and configure your MCP client (Claude Code, VS Code, Cursor) to point at it.
 
 ---
 
-## Backup Plans by Failure Mode
+## Participant Take-Aways
 
-| Failure | Impact | Backup |
-|---------|--------|--------|
-| EvalHub CR not ready | Sections 02-06 partially affected | Use mock endpoint; show pre-generated results from `resources/sample-outputs/` |
-| Model endpoint down | Section 03 Track A, Sections 04-06 affected | Use `MODEL_ENDPOINT=http://mock-endpoint:8080` with canned responses |
-| Garak cannot reach model | Section 03 Track B | Use pre-run report in `03-safety-evaluation/sample-garak-report/` |
-| KFP unreachable | Section 06 | Walk through `pipeline.yaml` architecture; skip submission |
-| PyPI / pip unreachable | Sections 02-06 setup steps | Use pre-installed venv at `/opt/workshop/venv/` |
-| Participant data loss | Any section | Each `setup.sh` is idempotent — re-run to restore state |
+Every participant leaves with:
 
----
+- **Working code they ran today** — notebooks, scripts, and configs in the workshop repo
+- `compare_approaches.ipynb` / `compare_approaches.py` — reusable MCP comparison notebook
+- `mcp_client.py` — 50-line MCP client adaptable to any EvalHub instance
+- `compute_irr.py` — IRR analysis tool for their own annotation datasets
+- `comparison_report.json` + `comparison_plot.png` — their actual results
+- `resources/governance-checklist.md` — mapping workshop artifacts to regulatory evidence
 
-## Post-Workshop
-
-1. Export all EvalRun results before cluster teardown: `evalhub run list -o json > workshop-results-$(date +%Y%m%d).json`.
-2. Collect feedback forms (digital or paper).
-3. Archive the workshop cluster state for reference.
-4. Delete `workshop-eval` namespace after confirmed export: `oc delete namespace workshop-eval`.
+**Repo:** `github.com/williamcaban/ieee-icad2026` — clone, adapt, run against your own models.
