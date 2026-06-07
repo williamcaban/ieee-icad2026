@@ -156,8 +156,8 @@ Today you do all three, with a real model.
 
 **The infrastructure layer that makes evaluation reproducible.**
 
-- Runs evaluations through pluggable providers: **lm-eval**, **garak**, **lighteval**
-- Stores every result with full provenance — model, framework version, timestamp, config
+- Runs evaluations through pluggable providers: `lm-eval`, `garak`, `lighteval`
+- Stores every result with full provenance: model, framework version, timestamp, config
 - Same API on your laptop (`localhost:18080`) and on Kubernetes (swap `base_url`)
 - MCP server exposes evaluations to any AI coding assistant or custom script
 
@@ -174,7 +174,7 @@ not just a number in a notebook.
 <!-- Guardrails concept -->
 ## What Are Guardrails?
 
-Guardrails sit **between the client and the model** — enforcing policy before a prompt reaches the LLM and before a response reaches the user.
+Guardrails sit **between the client and the model** enforcing policy before a prompt reaches the LLM and before a response reaches the user.
 
 ```
 Client ──► Guardrail Layer ──► LLM ──► Guardrail Layer ──► Client
@@ -192,7 +192,7 @@ A guardrail with no evaluation is security theatre.
 <!-- NeMo Guardrails -->
 ## NeMo Guardrails in This Workshop
 
-**NeMo Guardrails** (NVIDIA, open source) enforces policy via **Colang**, a readable, auditable rules language.
+**`NeMo Guardrails`** (NVIDIA, open source) enforces policy via **Colang**, a readable, auditable rules language.
 
 ```colang
 define user attempt jailbreak
@@ -207,14 +207,14 @@ define flow check jailbreak
   bot refuse jailbreak
 ```
 
-In the guardrail demo:
-two rails, ~30 lines of Colang, running as an OpenAI-compatible
-proxy on `localhost:18090`, the same endpoint lm-eval and garak use.
+- In the guardrail demo:
+    - two rails, ~30 lines of Colang, running as an OpenAI-compatible
+    - proxy on `localhost:18090`, the same endpoint `lm-eval` and `garak` use.
 
 ---
 
 <!-- EvalHub collections -->
-## EvalHub Evaluation Collections
+## EvalHub `Evaluation Collections`
 
 A **collection** is a named, reusable battery of benchmarks — your evaluation protocol as a first-class artifact.
 
@@ -233,9 +233,10 @@ Why collections matter for researchers:
 ---
 
 <!-- Pass/fail per benchmark -->
-## Pass/Fail Criteria — Per Benchmark
+## Pass/Fail Criteria (Per Benchmark)
 
-Every benchmark carries its own threshold — embedded in the spec, not documentation:
+Every benchmark carries its own threshold,
+embedded in the spec, not documentation:
 
 ```yaml
 benchmarks:
@@ -256,9 +257,10 @@ they reproduce the **pass/fail decision**, not just the raw score.
 ---
 
 <!-- Weighted pass/fail for collections -->
-## Weighted Pass/Fail — Collections
+## Weighted Pass/Fail (Collections)
 
-Collections aggregate benchmark results with configurable weights and an overall threshold:
+Collections aggregate benchmark results with
+configurable weights and an overall threshold:
 
 ```yaml
 collection: workshop-safety-v1
@@ -306,7 +308,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 `Section 03`
 
-- Compute **Inter-Rater Reliability** on your annotation dataset. Your IRR methodology is the contribution — a principled quality gate for benchmark construction.
+- Compute **Inter-Rater Reliability** on your annotation dataset. Your IRR methodology is the contribution, a principled quality gate for benchmark construction.
 
 - Register it in EvalHub alongside the baseline, so Act 3 can compare them on equal footing.
 
@@ -321,7 +323,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 `Section 04`
 
-- A self-contained **Python/Jupyter notebook** calls the EvalHub MCP server directly — no framework, just `requests` and JSON-RPC 2.0.
+- A self-contained **Python/Jupyter notebook** calls the EvalHub MCP server directly, no framework, just `requests` and JSON-RPC 2.0.
 
 - Submit both approaches. Poll until complete. Plot the comparison. Export a publication-ready figure.
 
@@ -381,9 +383,8 @@ evalhub CLI / MCP ──► EvalHub on RHOAI cluster
                   Persistent results · governance artifacts
 ```
 
-Only one line changes: `evalhub config set base_url <cluster-url>`
-
-**Pre-recorded demo** shown in the closing session.
+- Only one line changes: `evalhub config set base_url <cluster-url>`
+- **Pre-recorded demo** shown in the closing session.
 
 ---
 
@@ -411,11 +412,11 @@ source .venv/bin/activate
 cd 01-setup && bash setup.sh
 ```
 
-Takes about 30 seconds. Read the output.
+- Takes about 30 seconds. Read the output.
 
-**What `setup.sh` does:** 
-Starts `eval-hub-server` on `localhost:18080`,
-registers lm-eval and garak providers, installs `evalhub-mcp`.
+- What `setup.sh` does?
+  - Starts `eval-hub-server` on `localhost:18080`,
+  - registers `lm-eval` and `garak` providers, installs `evalhub-mcp`
 
 ---
 
