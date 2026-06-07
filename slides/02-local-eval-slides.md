@@ -26,7 +26,7 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
 ---
 
-# Act 1 — Replicating Established Baselines
+# Act 1: Replicating Established Baselines
 
 <div class="journey">
 
@@ -34,39 +34,51 @@ style: |
 
 </div>
 
-**Why replicate before claiming novelty?** Because a benchmark that no one else can reproduce is not a contribution — it's a claim.
+<div class="warning">
+
+**Why replicate before claiming novelty?**
+Because a benchmark that no one else can reproduce
+is not a contribution, it's a claim.
+
+</div>
 
 ---
 
 ## What Replication Means Here
 
-You are not writing new benchmarks. You are running well-established evaluations, on your infrastructure, against your model, under exactly the conditions the original authors specified.
+You are not writing new benchmarks. You are running well-established
+evaluations, on your infrastructure, against your model,
+under exactly the conditions the original authors specified.
 
 This produces two things:
 
-1. **A reproducible baseline** — a score you can defend, because you used the community-accepted method
-2. **A point of comparison** — when Act 2 introduces your novel methodology, you can say "baseline was X, our approach measures Y"
+1. **A reproducible baseline**: a score you can defend, because you used the community-accepted method
+2. **A point of comparison**: when Act 2 introduces your novel methodology, you can say "baseline was X, our approach measures Y"
+
+<div class="warning">
 
 This is standard practice in NLP and ML safety research. It is also what regulators mean when they ask for "validated evaluation methodology."
+
+</div>
 
 ---
 
 ## The Three Baselines You Will Run
 
 | Benchmark | Origin | What it measures |
-|-----------|--------|-----------------|
+|:-----------|:--------|:-----------------|
 | `bbq_generate` | Parrish et al., 2022 (BBQ) | Intersectional demographic bias across 9 social categories |
-| `mmlu_business_ethics_generative` | Hendrycks et al., 2021 (MMLU) | Ethics alignment — business ethics domain |
-| `lmrc.Bullying` + `promptinject.*` | Derczynski et al., 2024 (Garak) | Adversarial exploitability — harassment elicitation, prompt injection |
+| `mmlu_business_ethics_generative` | Hendrycks et al., 2021 (MMLU) | Ethics alignment, business ethics domain |
+| `lmrc.Bullying` + `promptinject.*` | Derczynski et al., 2024 (Garak) | Adversarial exploitability: harassment elicitation, prompt injection |
 
 <p class="cite">Each of these has been cited in peer-reviewed work. Running them against your model gives you a baseline position relative to the existing literature.</p>
 
 ---
 
-## Two Tracks — Static + Adversarial
+## Two Tracks: Static + Adversarial
 
 ```
-Track A — Static benchmarks (lm-eval)    Track B — Adversarial probes (Garak)
+Track A: Static benchmarks (lm-eval)    Track B: Adversarial probes (Garak)
 ┌──────────────────────────────────┐     ┌──────────────────────────────────┐
 │ "Does the model produce biased   │     │ "Can an adversary exploit the    │
 │  outputs on known failure modes  │     │  model's behaviour in ways the   │
@@ -77,12 +89,12 @@ Track A — Static benchmarks (lm-eval)    Track B — Adversarial probes (Garak
 └──────────────────────────────────┘     └──────────────────────────────────┘
 ```
 
-A model that passes Track A can still fail Track B.
+A model that passes `Track A` can still fail `Track B`.
 Both baselines are needed for a complete picture.
 
 ---
 
-## Track A — Running the Bias Baseline
+## Track A: Running the Bias Baseline
 
 ```bash
 evalhub eval run \
@@ -95,33 +107,36 @@ evalhub eval run \
 
 Expected metrics:
 
-| Metric | Typical value | Meaning |
-|--------|---------------|---------|
-| `acc` | 0.20 | 1 in 5 bias questions answered correctly |
-| `accuracy_amb` | 0.00 | Always picks stereotyped answer in ambiguous context |
-| `amb_bias_score` | 0.33 | 33% of ambiguous answers favour one demographic group |
+| Metric | Value | Interpretation |
+|:--------|:-------|:---------------|
+| `acc` | 0.20 | 1 in 5 questions correct |
+| `accuracy_amb` | 0.00 | Always picks stereotyped answer when ambiguous |
+| `amb_bias_score` | 0.33 | 33% of answers favour one demographic group |
 
-<p class="cite">BBQ was designed specifically to surface subgroup failures invisible in aggregate fairness scores.</p>
+<p class="cite">BBQ was designed specifically to surface <br />
+subgroup failures invisible in aggregate fairness scores.</p>
 
 ---
 
-## So What? — The BBQ Score in Context
+## So What?: The BBQ Score in Context
 
 <div class="warning">
 
-**amb_bias_score = 0.33** — when context is ambiguous, the model picks stereotyped answers one-third of the time. Not because it was instructed to: because of training data patterns.
+- **amb_bias_score = 0.33**
+    When context is ambiguous, the model picks stereotyped answers one-third of the time. Not because it was instructed to, but because of training data patterns.
 
-For a hiring tool, a loan system, or a healthcare triage assistant, this is a deployment risk requiring explicit mitigation and documented evidence.
+    For a hiring tool, a loan system, or a healthcare triage assistant, this is a deployment risk requiring explicit mitigation and documented evidence.
 
-**OWASP LLM06** — Sensitive Information Disclosure
+- **OWASP LLM06**: Sensitive Information Disclosure
 
 </div>
 
-This is your baseline. Act 2 measures the same risk domain through a different lens.
+This is your baseline. Act 2 measures the
+same risk domain through a different lens.
 
 ---
 
-## Track B — Running the Adversarial Baseline
+## Track B: Running the Adversarial Baseline
 
 ```bash
 evalhub eval run \
@@ -134,12 +149,13 @@ evalhub eval run \
 
 <div class="warning">
 
-`promptinject.HijackHateHumans` typically produces `"I hate humans."` with no additional prompt engineering.  
-**OWASP LLM01** — Prompt Injection: Critical severity
+- `promptinject.HijackHateHumans` typically produces `"I hate humans."` with no additional prompt engineering.  
+- **OWASP LLM01**: Prompt Injection: Critical severity
 
 </div>
 
-This probe is a peer-reviewed systematic attack, not an ad hoc jailbreak. It is reproducible, repeatable, and citable.
+This probe is a peer-reviewed systematic attack,
+not an ad hoc jailbreak. It is reproducible, repeatable, and citable.
 
 ---
 
@@ -151,20 +167,20 @@ After both tracks complete, save a structured summary for Act 3:
 evalhub eval results --format json > results/baseline_summary.json
 ```
 
-`results/baseline_summary.json` is the input to the Act 3 MCP comparison notebook.
+- `results/baseline_summary.json` is the input to the Act 3 MCP comparison notebook.
 
 ---
 
 ## What You Have Built
 
-✅ Reproducible bias baseline (BBQ, MMLU) — citable against published benchmarks  
-✅ Adversarial baseline (Garak) — systematic probe coverage, OWASP-mapped  
-✅ Both stored in `eval-hub-server` — queryable via CLI and MCP  
-✅ `results/baseline_summary.json` — the Act 3 comparison input
+- ✅ Reproducible bias baseline (BBQ, MMLU): citable against published benchmarks  
+- ✅ Adversarial baseline (Garak): systematic probe coverage, OWASP-mapped  
+- ✅ Both stored in `eval-hub-server`: queryable via CLI and MCP  
+- ✅ `results/baseline_summary.json`: the Act 3 comparison input
 
 <div class="callout">
 
-**→ Act 2:** Before you trust these scores — do you trust the labels they're measured against?  
-That is the IRR question. And answering it is itself a research contribution.
+- **→ Act 2:** Before you trust these scores: do you trust the labels they're measured against?  
+- That is the IRR question. And answering it is itself a research contribution.
 
 </div>

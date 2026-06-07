@@ -26,7 +26,7 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
 ---
 
-# Act 3 — MCP Server as Research Interface
+# Act 3: MCP Server as Research Interface
 
 <div class="journey">
 
@@ -34,37 +34,44 @@ style: |
 
 </div>
 
-You have two benchmarks in EvalHub — the established baseline and your novel contribution. Act 3 compares them programmatically, with a tool researchers already know: Python and HTTP.
+You have two benchmarks in EvalHub
+- The established baseline and your novel contribution.
+- Act 3 compares them programmatically, with a tool researchers already know: Python and HTTP.
 
 ---
 
 ## Why Not Just Read the JSON?
 
-EvalHub stores results from many runs, many models, many collaborators. The **MCP server** gives you a stable programmatic interface into that platform:
-
-- Submit new evaluations without opening a terminal
-- Query results across runs without file path management
-- Same interface whether EvalHub is on your laptop or a Kubernetes cluster
-
-Most MCP clients assume you already have one configured. This lab lowers that barrier: a self-contained Python script, no extra dependencies.
+- EvalHub stores results from many runs, many models, many collaborators.
+- The **`MCP server`** gives you a stable programmatic interface into that platform:
+    - Submit new evaluations without opening a terminal
+    - Query results across runs without file path management
+    - Same interface whether EvalHub is on your laptop or a Kubernetes cluster
+- ***Note:*** Most `MCP clients` assume you already have one configured.
+    - This lab lowers that barrier by using a self-contained Python script, no extra dependencies.
 
 ---
 
-## Three Tools — That's It
+## Three Tools: That's It
 
 The EvalHub MCP server exposes exactly three tools:
 
 | Tool | What it does |
-|------|-------------|
+|:------|:-------------|
 | `submit_evaluation` | Start a new eval job — model, benchmark, provider, name |
 | `get_job_status` | Check progress; returns per-benchmark status and scores when done |
 | `cancel_job` | Stop a running job |
 
-Three tools. That is the entire interface. Everything you need for the comparison workflow.
+<div class="journey">
+
+Three tools. That is the entire interface.
+Everything you need for the comparison workflow.
+
+</div>
 
 ---
 
-## Zero Framework — Just HTTP + JSON-RPC
+## Zero Framework: Just HTTP + JSON-RPC
 
 MCP is JSON-RPC 2.0 over HTTP. Nothing else.
 
@@ -81,9 +88,8 @@ def mcp_call(tool_name, arguments, mcp_url="http://localhost:3001"):
     return response.json()["result"]
 ```
 
-Eight lines. No SDK. No async. Reads like what it is.
-
-`mcp_client.py` wraps this into `submit_evaluation`, `get_job_status`, `cancel_job`.
+- Eight lines. No SDK. No async. Reads like what it is.
+- `mcp_client.py` wraps this into `submit_evaluation`, `get_job_status`, `cancel_job`.
 
 ---
 
@@ -102,11 +108,11 @@ Cell 7  Plot        ── matplotlib bar chart → comparison_plot.png
 Cell 8  Export      ── write comparison_report.json for supplementary material
 ```
 
-Cell 1 is the only cell researchers need to modify. Everything else is driven by the config they set there.
+- Cell 1 is the only cell researchers need to modify. Everything else is driven by the config they set there.
 
 ---
 
-## Cell 1 — The Researcher Configures Their Comparison
+## Cell 1: The Researcher Configures Their Comparison
 
 ```python
 import os
@@ -131,7 +137,7 @@ APPROACH_B = {
 
 ---
 
-## Cell 3 — Submit Both Approaches
+## Cell 3: Submit Both Approaches
 
 ```python
 from mcp_client import EvalHubMCPClient
@@ -151,7 +157,7 @@ print(f"Approach B job: {job_b['job_id']}")
 
 ---
 
-## Cell 4 — Poll Until Complete
+## Cell 4: Poll Until Complete
 
 ```python
 import time
@@ -171,7 +177,7 @@ results = wait_for_jobs(job_a["job_id"], job_b["job_id"])
 
 ---
 
-## Cell 7 — Plot the Comparison
+## Cell 7: Plot the Comparison
 
 ```python
 import matplotlib.pyplot as plt
@@ -198,16 +204,17 @@ plt.show()
 
 ## What You Have Built
 
-✅ Baseline and novel contribution compared on the same model, in the same framework  
-✅ `comparison_plot.png` — a figure ready for a paper or presentation  
-✅ `comparison_report.json` — structured output for a supplementary materials section  
-✅ `mcp_client.py` — a reusable 50-line MCP client for any EvalHub instance
+- ✅ Baseline and novel contribution compared on the same model, in the same framework  
+- ✅ `comparison_plot.png` — a figure ready for a paper or presentation  
+- ✅ `comparison_report.json` — structured output for a supplementary materials section  
+- ✅ `mcp_client.py` — a reusable 50-line MCP client for any EvalHub instance
 
 <div class="callout">
 
-**The same notebook works against a Kubernetes cluster.**  
-Change one line: `EvalHubMCPClient(url="https://your-evalhub-cluster.example.com")`  
-— and Cell 1's APPROACH_A/APPROACH_B config is identical.
+- **The same notebook works against a Kubernetes cluster.**  
+    Change one line:
+    `EvalHubMCPClient(url="https://your-evalhub-cluster.example.com")`
+    and Cell 1's APPROACH_A/APPROACH_B config is identical.
 
 </div>
 
@@ -215,7 +222,7 @@ Change one line: `EvalHubMCPClient(url="https://your-evalhub-cluster.example.com
 
 ## At Scale: Kubernetes (Pre-Recorded Demo)
 
-The local pattern you used today scales directly to Kubernetes via Red Hat OpenShift AI (RHOAI):
+The local pattern you used today scales directly to Kubernetes:
 
 ```
 evalhub CLI / MCP ──► EvalHub on RHOAI cluster
@@ -226,6 +233,6 @@ evalhub CLI / MCP ──► EvalHub on RHOAI cluster
                       EU AI Act Article 9/10 evidence export
 ```
 
-**We will show a pre-recorded demo** of this in the closing session — same benchmark IDs, same MCP tools, same `mcp_client.py` notebook, running against a live RHOAI cluster.
+- **We will show a pre-recorded demo** of this in the closing session: same benchmark IDs, same MCP tools, same `mcp_client.py` notebook, running against a live Kubernetes cluster.
 
-No cluster setup required today. Your local work maps directly to the production pattern.
+- No cluster setup required today. Your local work maps directly to the production pattern.

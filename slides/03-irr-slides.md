@@ -27,7 +27,7 @@ style: |
   .analogy { background: #1a1a2e; border: 1px solid #7bc8f6; padding: 16px 20px; margin: 16px 0; border-radius: 6px; font-style: italic; }
 ---
 
-# Act 2 — Your Novel Contribution
+# Act 2: Your Novel Contribution
 
 <div class="journey">
 
@@ -35,23 +35,27 @@ style: |
 
 </div>
 
-**The question Act 1 leaves open:** the baseline you just ran measured the model against human-annotated labels. But *were those annotations reliable?* And if not — are yours?
+**The question Act 1 leaves open:**
+- The baseline you just ran measured the model against human-annotated labels. But *were those annotations reliable?* And if not, are yours?
 
 ---
 
 ## The Problem That Act 1 Doesn't Solve
 
-In Act 1 you got `bbq_generate acc = 0.20`. That score compares model outputs against labels created by human annotators.
+- In Act 1 you got `bbq_generate acc = 0.20`. That score compares model outputs against labels created by human annotators.
 
-**But what if the annotators disagreed?**
+  **But what if the annotators disagreed?**
 
-If three annotators labelled the same text as `safe`, `unsafe`, and `ambiguous` — whose label is correct? The model's score is measuring label disagreement, not model safety.
+  - If three annotators labelled the same text as `safe`, `unsafe`, and `ambiguous`, whose label is correct?
 
-This is not a corner case. It is endemic to benchmark construction in safety and fairness evaluation. Most published benchmarks do not report inter-rater reliability.
+    The model's score is measuring label disagreement, not model safety.
+
+  This is not a corner case. It is endemic to benchmark construction in safety and fairness evaluation. Most published benchmarks do not report inter-rater reliability.
 
 <div class="warning">
 
-A benchmark with low annotator agreement is not a benchmark — it is noise with a citation.
+A benchmark with low annotator agreement is not a benchmark,
+it is noise with a citation.
 
 </div>
 
@@ -59,16 +63,16 @@ A benchmark with low annotator agreement is not a benchmark — it is noise with
 
 ## Your Contribution: An IRR Quality Gate
 
-**IRR analysis applied as a pre-registration quality gate** is itself a research contribution.
+- **IRR analysis applied as a pre-registration quality gate** is itself a research contribution.
 
-It answers: *before running a model against this dataset, can you demonstrate the labels are reliable enough to draw conclusions from?*
+  It answers: *before running a model against this dataset, can you demonstrate the labels are reliable enough to draw conclusions from?*
 
 <div class="analogy">
 
-Imagine two radiologists labelling X-rays as "concerning" or "clear."  
+- Imagine two radiologists labelling X-rays as "concerning" or "clear."  
 If they agree 95% of the time: trust the label.  
 If they agree 50% of the time: the label is a coin flip.  
-**Krippendorff's Alpha** quantifies this for any number of annotators.
+- **`Krippendorff's Alpha`** quantifies this for any number of annotators.
 
 </div>
 
@@ -85,27 +89,29 @@ annotations-sample.csv ──► compute_irr.py ──► irr_report.json
                                                   Recommendation: REGISTER
 ```
 
-`irr_report.json` is a **reproducibility artifact** — it contains the raw annotations, the computed metrics, the excluded items, and the decision. Anyone reading your benchmark can verify the α value without re-running your annotation pipeline.
+- `irr_report.json` is a **reproducibility artifact**. It contains the raw annotations, the computed metrics, the excluded items, and the decision. Anyone reading your benchmark can verify the α (alpha) value without re-running your annotation pipeline.
 
 ---
 
 ## Interpreting the Output
 
 ```
-  α = 0.8118  — STRONG — benchmark labels are reliable
+  α = 0.8118  (STRONG) ==> benchmark labels are reliable
   κ (Annotator 1 vs 2) = 0.6694  (moderate)
   κ (Annotator 2 vs 3) = 0.3750  (fair/poor)  ← investigate this pair
 ```
 
 | α value | Decision |
-|---------|----------|
-| α < 0.67 | Do not register — re-annotate or discard |
-| 0.67 ≤ α < 0.80 | Register with caution — document the uncertainty |
-| α ≥ 0.80 | Register — labels are reliable as ground truth |
+|:---------|:----------|
+| α < 0.67 | Do not register (re-annotate or discard) |
+| 0.67 ≤ α < 0.80 | Register with caution (document the uncertainty) |
+| α ≥ 0.80 | Register (labels are reliable as ground truth) |
 
 <div class="callout">
 
-The pairwise κ between Annotators 2 and 3 (0.375) reveals a systematic disagreement on where the `safe`/`unsafe` boundary lies. In a production annotation pipeline, you would run a calibration session before annotating more data.
+- The pairwise κ between Annotators 2 and 3 (0.375) reveals a systematic disagreement on where the `safe`/`unsafe` boundary lies.
+
+  In a production annotation pipeline, you would run a calibration session before annotating more data.
 
 </div>
 
@@ -135,7 +141,7 @@ evalhub eval run \
   --param limit=5 --wait
 ```
 
-Same model, same framework — Act 3 can now compare on equal footing.
+Same model, same framework. Act 3 can now compare on equal footing.
 
 ---
 
@@ -155,7 +161,7 @@ Same model, same framework — Act 3 can now compare on equal footing.
 }
 ```
 
-The reliability evidence travels with the benchmark. Anyone who runs `evalhub benchmarks show icad2026-irr-safety` sees the α value, the annotator pairs, the threshold — not a link to a separate PDF.
+- The reliability evidence travels with the benchmark. Anyone who runs `evalhub benchmarks show icad2026-irr-safety` sees the α value, the annotator pairs, the threshold, not a link to a separate PDF.
 
 This is what "reproducible" means in practice.
 
@@ -163,13 +169,14 @@ This is what "reproducible" means in practice.
 
 ## What You Have Built
 
-✅ IRR analysis (Cohen's κ + Krippendorff's α) on a real annotation dataset  
-✅ Principled exclusion — ambiguous texts filtered, not silently dropped  
-✅ Benchmark registered in EvalHub with reliability metadata embedded  
-✅ Novel benchmark results against the same model as Act 1
+- ✅ IRR analysis (Cohen's κ + Krippendorff's α) on a real annotation dataset  
+- ✅ Principled exclusion — ambiguous texts filtered, not silently dropped  
+- ✅ Benchmark registered in EvalHub with reliability metadata embedded  
+- ✅ Novel benchmark results against the same model as Act 1
 
 <div class="callout">
 
-**→ Act 3:** Both results now exist in EvalHub. A Python notebook calls the MCP server, compares them, and plots a publication-ready figure — no MCP framework required.
+- **→ Act 3:** Both results now exist in EvalHub. A Python notebook calls the MCP server, compares them, and plots a publication-ready figure.
+  No MCP framework required.
 
 </div>

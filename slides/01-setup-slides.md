@@ -26,7 +26,7 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
 ---
 
-# Section 01 — Setup
+# Section 01: Setup
 
 <div class="journey">
 
@@ -34,8 +34,9 @@ style: |
 
 </div>
 
-**Goal:** One working `evalhub` CLI pointed at a live local server, and `evalhub-mcp` ready for Act 3.  
-**Time:** 12 minutes · **Needs cluster?** No — everything runs on your laptop.
+- **Goal:** One working `evalhub` CLI pointed at a live local server, and `evalhub-mcp` ready for Act 3.  
+- **Time:** 12 minutes
+- **Needs cluster?** No, everything runs on your laptop.
 
 ---
 
@@ -52,27 +53,28 @@ bash setup.sh
      └── 6. Install evalhub-mcp binary (for Act 3)
 ```
 
-The script is **idempotent** — safe to re-run. If anything breaks, `bash setup.sh` resets you.
+The script is **idempotent**, safe to re-run.
+If anything breaks, `bash setup.sh` resets you.
 
 ---
 
 ## The Tool Stack
 
 | Tool | What it is | Think of it as |
-|------|------------|----------------|
+|:------|:------------|:----------------|
 | `lm_eval` | Benchmark harness for established safety tasks | `pytest` for your model |
 | `garak` | Adversarial probe framework | Fuzzing for prompts |
 | `eval-hub-server` | Local evaluation orchestrator | MLflow for safety evals |
 | `evalhub` CLI | Submit jobs, read results | `mlflow run` equivalent |
 | `evalhub-mcp` | MCP server for EvalHub | HTTP interface for Act 3 notebook |
 
-`uv sync` pins every dependency at exact versions — no drift, no "works on my machine."
+- `uv sync` pins every dependency at exact versions: no drift, no "works on my machine."
 
-**Model endpoint:** works with OpenRouter, Ollama, vLLM, or any OpenAI-compatible endpoint.
+- **Model endpoint:** works with any OpenAI-compatible endpoint (e.g., OpenRouter, Ollama, vLLM, etc.)
 
 ---
 
-## Checkpoint — What Success Looks Like
+## Checkpoint: What Success Looks Like
 
 ```bash
 evalhub health

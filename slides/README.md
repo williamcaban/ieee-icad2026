@@ -1,6 +1,6 @@
 # Workshop Slides
 
-Marp-compatible Markdown presentations — one per section. Each slide deck:
+Marp-compatible Markdown presentations (one per section). Each slide deck:
 - Opens the section with a **journey map** showing progress through the workshop
 - Explains the **component diagram** for that section (what's running, what connects to what)
 - Shows **expected outputs** so participants know what success looks like
@@ -12,11 +12,11 @@ Marp-compatible Markdown presentations — one per section. Each slide deck:
 
 | File | Section | When to show |
 |------|---------|-------------|
-| `00-opening.md` | Opening | Before Section 01 setup.sh |
-| `01-setup-slides.md` | Setup | Immediately before participants run setup.sh |
+| `00-opening.md` | Opening | Before Section 01 `setup.sh` |
+| `01-setup-slides.md` | Setup | Immediately before participants run `setup.sh` |
 | `02-local-eval-slides.md` | Local evaluation | Before Track A; again before Track B |
-| `03-irr-slides.md` | Act 2 — IRR benchmark | After the break, before Section 03 |
-| `04-mcp-slides.md` | Act 3 — MCP comparison | Before Section 04 |
+| `03-irr-slides.md` | IRR benchmark | After the break. Before Section 03 |
+| `04-mcp-slides.md` | MCP comparison | Before Section 04 |
 
 ---
 
@@ -43,13 +43,16 @@ marp slides/00-opening.md --pdf
 
 ## Without Marp
 
-The slides are readable as plain Markdown. Each slide is separated by `---`. You can copy the content into any slide tool (Google Slides, PowerPoint, Keynote) — the diagrams are ASCII and the tables transfer cleanly.
+- The slides are readable as plain Markdown. Each slide is separated by `---`. 
+- You can copy the content into any slide tool (Google Slides, PowerPoint, Keynote).
+- The diagrams are ASCII and the tables transfer cleanly.
 
 ---
 
 ## Design Notes
 
-- **Dark theme** on `#0f0f1a` — readable in conference rooms with variable lighting
-- **Red Hat brand colours** — `#ee0000` (Red Hat red), `#f5a623` (orange), `#7bc8f6` (light blue)
+- **Dark theme** use `#0f0f1a` (readable in conference rooms with variable lighting)
+- **Red Hat brand colours** 
+    - `#ee0000` (Red Hat red)  |  `#f5a623` (orange)  |  `#7bc8f6` (light blue)
 - **Code blocks** use Catppuccin Mocha palette (`#1e1e2e` background) for syntax contrast
-- Fonts: Red Hat Text → Segoe UI → system sans-serif (no external dependencies)
+- **Fonts** Red Hat Text → Segoe UI → system sans-serif (no external dependencies)

@@ -39,9 +39,9 @@ style: |
 <!-- Slide 2: Opening quote -->
 
 > "Getting an LLM to respond is the easy part.  
-> Knowing whether it *should have* responded that way —  
-> knowing your benchmark was *measuring what you thought* —  
-> and knowing your finding will *reproduce next month*:  
+> Knowing whether it ***should have*** responded that way,  
+> knowing your benchmark was ***measuring what you thought***,  
+> and knowing your finding will ***reproduce next month***:  
 > those are the hard parts."
 
 ---
@@ -52,25 +52,29 @@ style: |
 <div class="cols3">
 <div>
 
-**1. Bias hidden in aggregate scores**
+**1. Bias hidden in 
+aggregate scores**
 
-Standard benchmarks oversample majority populations. Subgroup failures stay invisible until production.
-
-</div>
-<div>
-
-**2. Attacks that standard suites miss**
-
-OWASP LLM Top 10 has 10 threat categories. 
-Most published safety evaluations cover 3 to 4.
+- Standard benchmarks oversample majority populations.
+- Subgroup failures stay invisible until production.
 
 </div>
 <div>
 
-**3. Evaluation that happened once**
+**2. Attacks that
+standard suites miss**
 
-Models drift.
-A release-time score provides no guarantee six months later.
+- OWASP LLM Top 10 has 10 threat categories. 
+- Most published safety evaluations cover 3 to 4.
+
+</div>
+<div>
+
+**3. Evaluation that
+happened once**
+
+- Models drift.
+- A release-time score provides no guarantee six months later.
 
 </div>
 </div>
@@ -91,13 +95,19 @@ frontier models showed measurable **demographic bias** on at least one WinoGende
 <!-- Slide 5: Regulatory scope -->
 ## This Is Not One Team's Problem
 
-- **EU AI Act (2024)** — Articles 9 and 10 require *reproducible* risk assessments. "We evaluated it once at launch" does not satisfy Article 9(7).
+- **EU AI Act (2024)** Articles 9 and 10 require *reproducible* risk assessments.
+  - "We evaluated it once at launch" does not satisfy Article 9(7).
 
-- **NIST AI RMF (2023)** — MEASURE 2.5 and MANAGE 1.3 require ongoing, traceable evaluation evidence — not a snapshot.
+- **NIST AI RMF (2023)** MEASURE 2.5 and MANAGE 1.3 require ongoing, traceable evaluation evidence, not a snapshot.
 
-- **FDA AI/ML Guidance (2025)** — SaMD manufacturers must show evaluation is *continuous* and *auditable*.
+- **FDA AI/ML Guidance (2025)** SaMD manufacturers must show evaluation is *continuous* and *auditable*.
 
-**The common thread:** regulators assume evaluations are reproducible. Most are not.
+<div class="warning">
+
+**The common thread:** 
+Regulators assume evaluations are reproducible. **Most are not.**
+
+</div>
 
 ---
 
@@ -107,14 +117,15 @@ frontier models showed measurable **demographic bias** on at least one WinoGende
 Running a benchmark is easy. *Reproducing someone else's result* is not.
 
 What changes between runs:
-- **Annotator disagreement** — whose label did the original score depend on?
-- **Benchmark configuration** — prompt template, few-shot count, temperature, output parsing
-- **Infrastructure** — model quantisation, batching strategy, tokeniser version
-- **Threshold ambiguity** — what does "pass ≥ 0.80 on BBQ" mean without the exact config?
+- **Annotator disagreement**: whose label did the original score depend on?
+- **Benchmark configuration**: prompt template, few-shot count, temperature, output parsing
+- **Infrastructure**: model quantisation, batching strategy, tokeniser version
+- **Threshold ambiguity**: what does "pass ≥ 0.80 on BBQ" mean without the exact config?
 
 <div class="warning">
 
-If you can't reproduce the baseline, you have no baseline — you have a claim.
+If you can't reproduce the baseline,
+you have no baseline, you have a claim.
 
 </div>
 
@@ -123,8 +134,10 @@ If you can't reproduce the baseline, you have no baseline — you have a claim.
 <!-- Slide 7: Researcher's dilemma -->
 ## The Researcher's Dilemma
 
-A new research group has a novel safety benchmark methodology — more reliable annotation, better coverage. Before publishing, they need to answer:
+A new research group has a novel safety benchmark
+methodology, more reliable annotation, better coverage.
 
+Before publishing, they need to answer:
 1. **What is the baseline?** Which established benchmarks does the community accept?
 2. **Can we replicate it?** Same infrastructure, same model, same conditions?
 3. **How does our contribution compare?** Side-by-side, on the same model, in the same framework?
@@ -150,7 +163,9 @@ Today you do all three, with a real model.
 
 <div class="callout">
 
-EvalHub turns an evaluation run into a **shareable, auditable, reproducible artifact** — not just a number in a notebook.
+EvalHub turns an evaluation run into a
+**shareable, auditable, reproducible artifact**
+not just a number in a notebook.
 
 </div>
 
@@ -170,14 +185,14 @@ Client ──► Guardrail Layer ──► LLM ──► Guardrail Layer ──�
 ```
 
 A guardrail with no evaluation is security theatre.  
-**This workshop puts the guardrails under pressure** — using the same systematic evaluation that found the vulnerability to verify the fix.
+**This workshop puts the guardrails under pressure**, using the same systematic evaluation that found the vulnerability to verify the fix.
 
 ---
 
 <!-- NeMo Guardrails -->
 ## NeMo Guardrails in This Workshop
 
-**NeMo Guardrails** (NVIDIA, open source) enforces policy via **Colang** — a readable, auditable rules language.
+**NeMo Guardrails** (NVIDIA, open source) enforces policy via **Colang**, a readable, auditable rules language.
 
 ```colang
 define user attempt jailbreak
@@ -192,7 +207,9 @@ define flow check jailbreak
   bot refuse jailbreak
 ```
 
-In the guardrail demo: two rails, ~30 lines of Colang, running as an OpenAI-compatible proxy on `localhost:18090` — the same endpoint lm-eval and garak use.
+In the guardrail demo:
+two rails, ~30 lines of Colang, running as an OpenAI-compatible
+proxy on `localhost:18090`, the same endpoint lm-eval and garak use.
 
 ---
 
@@ -233,7 +250,8 @@ benchmarks:
       lower_is_better: false
 ```
 
-When someone reproduces your evaluation, they reproduce the **pass/fail decision** — not just the raw score.
+When someone reproduces your evaluation,
+they reproduce the **pass/fail decision**, not just the raw score.
 
 ---
 
@@ -263,49 +281,53 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 ## Three Acts Today
 
 | Act | What you do | Section | Time |
-|-----|------------|---------|------|
-| **1 — Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | 22 min |
-| **2 — Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | 18 min |
-| **3 — MCP Comparison** | Python notebook calls MCP server — compare both, plot the result | 04 | 23 min |
+|:-----|:------------|---------|------|
+| **1. Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | 22 min |
+| **2. Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | 18 min |
+| **3. MCP Comparison** | Python notebook calls MCP server, compare both, plot the result | 04 | 23 min |
 
 ---
 
 <!-- Slide 9: Act 1 detail -->
-## Act 1 — Replicating Established Baselines
+## Act 1: Replicating Established Baselines
 
-`Section 02 · 22 minutes`
+`Section 02`
 
-Run **BBQ intersectional bias**, **MMLU business ethics**, and **Garak adversarial probes** exactly as peer literature defines them — lock a reproducible baseline before claiming anything novel.
+- Run **BBQ intersectional bias**, **MMLU business ethics**, and **Garak adversarial probes** exactly as peer literature defines them. Lock a reproducible baseline before claiming anything novel.
 
-**Why replicate first?** A novel result is only credible when compared against an established baseline that anyone can reproduce on their own infrastructure.
+- **Why replicate first?** A novel result is only credible when compared against an established baseline that anyone can reproduce on their own infrastructure.
 
-**You produce:** `results/baseline_summary.json`
+- **You produce:** `results/baseline_summary.json`
 
 ---
 
 <!-- Slide 10: Act 2 detail -->
-## Act 2 — Introducing a Novel Contribution
+## Act 2: Introducing a Novel Contribution
 
-`Section 03 · 18 minutes`
+`Section 03`
 
-Compute **Inter-Rater Reliability** on your annotation dataset. Your IRR methodology is the contribution — a principled quality gate for benchmark construction.
+- Compute **Inter-Rater Reliability** on your annotation dataset. Your IRR methodology is the contribution — a principled quality gate for benchmark construction.
 
-Register it in EvalHub alongside the baseline, so Act 3 can compare them on equal footing.
+- Register it in EvalHub alongside the baseline, so Act 3 can compare them on equal footing.
 
-**You produce:** `irr_report.json` · registered `icad2026-irr-safety` benchmark
+- **You produce:** 
+  - `irr_report.json`
+  - registered `icad2026-irr-safety` benchmark
 
 ---
 
 <!-- Slide 11: Act 3 detail -->
-## Act 3 — Side-by-Side Comparison via MCP
+## Act 3: Side-by-Side Comparison via MCP
 
-`Section 04 · 23 minutes`
+`Section 04`
 
-A self-contained **Python/Jupyter notebook** calls the EvalHub MCP server directly — no framework, just `requests` and JSON-RPC 2.0.
+- A self-contained **Python/Jupyter notebook** calls the EvalHub MCP server directly — no framework, just `requests` and JSON-RPC 2.0.
 
-Submit both approaches. Poll until complete. Plot the comparison. Export a publication-ready figure.
+- Submit both approaches. Poll until complete. Plot the comparison. Export a publication-ready figure.
 
-**You produce:** `comparison_plot.png` · `comparison_report.json`
+- **You produce:**
+  - `comparison_plot.png`
+  - `comparison_report.json`
 
 ---
 
@@ -313,32 +335,35 @@ Submit both approaches. Poll until complete. Plot the comparison. Export a publi
 ## The Tools
 
 | Tool | What it is | Role today |
-|------|------------|------------|
+|:------|:------------|:------------|
 | `lm-eval` | lm-evaluation-harness | Established benchmark harness (BBQ, MMLU) |
 | `garak` | Adversarial probe framework | Systematic red-teaming baseline |
 | `eval-hub-server` | Local eval orchestrator | Reproducible tracking, same API as cluster |
 | `evalhub` CLI | Submit / retrieve jobs | Identical on laptop and Kubernetes |
 | `evalhub-mcp` | MCP server | Programmable interface for Act 3 notebook |
 
-`uv sync` pins every version — bit-for-bit reproducible.
+`uv sync` pins every version, bit-for-bit reproducible.
 
 ---
 
 <!-- Slide 13: Architecture local -->
-## Architecture — All Local, No Cluster Required
+## Architecture: All Local (your laptop)
 
 ```
 SECTIONS 01–04 (your laptop — everything runs here)
 ─────────────────────────────────────────────────────
-Jupyter / Python ──► evalhub-mcp (localhost:3001)  [Act 3]
+
+Jupyter / Python ──► evalhub-mcp (localhost:3001) [Act 3]
+
 evalhub CLI ───────► eval-hub-server (localhost:18080)
                            │
                ┌───────────┴───────────┐
           lm_eval adapter         garak adapter
           (BBQ, MMLU)             (adversarial probes)
                └───────────┬───────────┘
+                           │  (any OpenAI-compatible endpoint)
                            ▼
-              OpenRouter · Ollama · vLLM (any OpenAI-compatible endpoint)
+              OpenRouter · Ollama · vLLM
 ```
 
 ---
@@ -365,10 +390,10 @@ Only one line changes: `evalhub config set base_url <cluster-url>`
 <!-- Slide 15: Ground rules -->
 ## Ground Rules
 
-✅ Every command is in `lab.md` — copy-paste is the intended workflow  
-✅ Every expected output is shown — troubleshooting section included  
-✅ Each section has `reset.sh` — run it to get back to a clean state  
-✅ OpenRouter free tier: 20 req/min — labs are designed within this limit
+- ✅ Every command is in `lab.md` (copy-paste is the intended workflow)
+- ✅ Every expected output is shown (troubleshooting section included)
+- ✅ Each section has `reset.sh` (run it to get back to a clean state)
+- ✅ OpenRouter free tier: 20 req/min (labs are designed within this limit)
 
 <div class="warning">
 
@@ -388,7 +413,9 @@ cd 01-setup && bash setup.sh
 
 Takes about 30 seconds. Read the output.
 
-**What `setup.sh` does:** Starts `eval-hub-server` on `localhost:18080`, registers lm-eval and garak providers, installs `evalhub-mcp`.
+**What `setup.sh` does:** 
+Starts `eval-hub-server` on `localhost:18080`,
+registers lm-eval and garak providers, installs `evalhub-mcp`.
 
 ---
 
