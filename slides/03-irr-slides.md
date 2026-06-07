@@ -31,7 +31,7 @@ style: |
 
 <div class="journey">
 
-`[ Act 1: Baseline ]` → `[ ● Act 2: Novel ]` → `[ Act 3: Compare ]`
+`[ 01 Setup ]` → `[ 02 Baseline ]` → `[ ● 03 Novel ]` → `[ 04 Compare ]`
 
 </div>
 
@@ -123,7 +123,7 @@ Once α meets the threshold, register it in local EvalHub (no `--dry-run`):
 
 ```bash
 python3 scripts/register_benchmark.py
-evalhub benchmarks list   # confirm icad2026-irr-safety appears
+evalhub collections list   # confirm workshop-irr-safety-v1 appears
 ```
 
 ---
@@ -177,7 +177,6 @@ This is what "reproducible" means in practice.
 
 <div class="callout">
 
-- **→ Act 3:** Both results now exist in EvalHub. A Python notebook calls the MCP server, compares them, and plots a publication-ready figure.
-  No MCP framework required.
+- **→ Act 3:** Both approaches now exist in EvalHub. A Python notebook calls the EvalHub REST API, retrieves full metric scores, and plots a publication-ready comparison.
 
 </div>

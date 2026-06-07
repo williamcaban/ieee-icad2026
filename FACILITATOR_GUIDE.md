@@ -10,7 +10,7 @@
 | Start | Dur | Section | Key output |
 |-------|-----|---------|------------|
 | 0:00 | 10 min | **Opening presentation** | Context set; three-act arc + EvalHub + guardrails framing |
-| 0:10 | 12 min | **01 — Setup** | `eval-hub-server` running; providers registered; `evalhub-mcp` installed |
+| 0:10 | 12 min | **01 — Setup** | `eval-hub-server` running; providers registered |
 | 0:22 | 14 min | **02 — Act 1 Track A** (BBQ + MMLU) | Bias scores in EvalHub; `baseline_summary.json` |
 | 0:36 | 8 min | **02 — Act 1 Track B** (Garak) + **Guardrails Demo** | Adversarial probe baseline; NeMo Guardrails proxy running; guarded run compared |
 | 0:44 | 10 min | **Break + Q&A** | MCP server verified; questions fielded |
@@ -34,8 +34,7 @@
 - [ ] Confirm `evalhub health` returns `{"status": "healthy"}`
 - [ ] Confirm `evalhub providers list` shows `lm_evaluation_harness` and `garak`
 - [ ] Test a real eval: `evalhub eval run --name "act1-bbq-baseline" --provider lm_evaluation_harness --benchmark bbq_generate --param limit=2 --wait`
-- [ ] Verify `evalhub-mcp --version` works (installed by `01-setup/setup.sh`, or `brew install eval-hub/evalhub/evalhub-mcp`)
-- [ ] Start `evalhub-mcp` manually and verify `curl http://localhost:3001/health` responds (see Act 3 MCP server pre-flight below)
+- [ ] Confirm `evalhub health` returns healthy after running `01-setup/setup.sh`
 - [ ] Run `uv run pytest tests/ -v` — all unit tests should pass; smoke tests may skip if HF offline
 
 ### Pre-recorded Kubernetes demo
@@ -112,7 +111,7 @@ Lab: `01-setup/lab.md`
 | `garak: command not found` | Same | Same |
 | `MODEL_ENDPOINT not set` | `.workshop-env` not edited | Edit `.workshop-env`, set endpoint and key, re-run `bash setup.sh` |
 | `eval-hub-server` fails to start | Port 18080 in use | `lsof -ti:18080 \| xargs kill -9`, then re-run |
-| `evalhub-mcp` not found | Homebrew not installed | `bash 04-compare/setup.sh` runs a GitHub release fallback |
+
 | `evalhub health` times out | Server still starting | Wait 10 s and retry; check `/tmp/evalhub-local.log` |
 | Ollama not responding | `ollama serve` not started | `ollama serve &` in another terminal |
 
@@ -197,7 +196,7 @@ Collapse to a 3-minute facilitator demo: start the proxy, run one `curl` PII tes
 
 During the break:
 - [ ] Verify `evalhub health` — server still healthy
-- [ ] Verify `evalhub-mcp` is available for Act 3: `evalhub-mcp --version`
+- [ ] Verify `evalhub health` still returns healthy
 - [ ] Field any architecture or concept questions
 - [ ] Confirm participants who fell behind have at least finished Track A BBQ scores
 
@@ -281,37 +280,21 @@ This is the central claim of Act 3: MCP is just HTTP + JSON. Researchers who und
 
 Both are provided. Participants choose whichever fits their workflow.
 
-### MCP server pre-flight
+### Act 3 pre-flight
 
-Before Act 3 starts, verify `evalhub-mcp` is available:
-
-```bash
-evalhub-mcp --version
-# If not installed: brew install eval-hub/evalhub/evalhub-mcp
-```
-
-Start it pointing at the local eval-hub-server:
+Before Act 3 starts, confirm the IRR collection from Act 2 is registered:
 
 ```bash
-# Create local config and start (from repo root)
-mkdir -p ~/.evalhub
-cat > ~/.evalhub/mcp-local.yaml <<EOF
-base_url: "http://localhost:18080"
-token: ""
-tenant: "workshop"
-transport: "http"
-host: "localhost"
-port: 3001
-EOF
-evalhub-mcp --config ~/.evalhub/mcp-local.yaml &
-curl http://localhost:3001/health
+evalhub collections list   # should show workshop-irr-safety-v1
+evalhub health              # should return healthy
 ```
+
+If the collection is missing: `cd 03-irr-local && python3 scripts/register_benchmark.py`
 
 ### Recovery
 
 | Problem | Recovery |
 |---------|---------|
-| `evalhub-mcp` not found | `brew install eval-hub/evalhub/evalhub-mcp` or download from GitHub releases |
 | MCP server not responding | Re-run the start commands above; check port 3001 is free |
 | `icad2026-irr-safety` not found | Participant skipped Act 2 — run `cd 03-irr-local && python3 scripts/register_benchmark.py` |
 | `matplotlib` import fails | `uv sync` in repo root |
@@ -342,7 +325,6 @@ curl http://localhost:3001/health
 
 **"How do I run this at scale against my institution's cluster?"** The pre-recorded demo covers this. The key: `evalhub config set base_url <cluster-url>` switches the CLI from local to cluster. The `mcp_client.py` notebook changes one line: `EvalHubMCPClient(url="<cluster-url>")`.
 
-**"Is the MCP server stable?"** The binary (`evalhub-mcp`) is stable. For production, run it as a container and configure your MCP client (Claude Code, VS Code, Cursor) to point at it.
 
 ---
 

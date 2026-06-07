@@ -1,6 +1,6 @@
 # Section 02 — Local Safety Evaluation
 
-> **Where you are:** `[ 01 Setup ] → [ ● Act 1: Baseline ] → [ Act 2: Novel ] → [ Act 3: MCP Compare ]`
+> **Where you are:** `[ 01 Setup ] → [ ● 02 Baseline ] → [ 03 Novel ] → [ 04 Compare ]`
 
 **Duration**: 20 minutes (Track A: 12 min | Track B: 8 min) · **Needs cluster?** No
 
@@ -8,7 +8,7 @@
 
 ## What This Section Accomplishes
 
-You submit two types of safety evaluations through the local `eval-hub-server` using the same `evalhub` CLI you'll use in Section 04 against the cluster. The model answers real questions; you read real scores.
+You submit two types of safety evaluations through the local `eval-hub-server`. The model answers real questions; you read real scores.
 
 ```
                            YOUR LAPTOP
@@ -41,7 +41,7 @@ Both are necessary. A model can score well on Track A while being trivially expl
 - Submit static benchmarks through `evalhub eval run` and interpret scored results.
 - Submit adversarial garak probes and connect findings to OWASP LLM threat codes.
 - Understand why Track A and Track B together tell a fuller story than either alone.
-- Observe that identical `evalhub` CLI commands work here (local) and in Section 04 (cluster).
+- Understand that `evalhub eval run` works identically against the local server and on Kubernetes — only `base_url` changes.
 
 ---
 
@@ -189,7 +189,7 @@ evalhub eval results <garak-job-id>
 
 The combination tells you: this model has *both* a systematic fairness problem *and* an exploitable injection surface. Neither finding alone would justify the response that both together do.
 
-> **🔁 Reuse pattern:** The `evalhub eval run` command is the same whether you're running locally or on the cluster. In Section 04, you'll run `evalhub config set base_url <cluster-url>` and the same command submits a Kubernetes `LMEvalJob` instead of a local subprocess. Same mental model, different execution environment.
+> **🔁 Reuse pattern:** `evalhub eval run` is identical on laptop and Kubernetes — only `evalhub config set base_url <cluster-url>` changes. The closing demo shows this running on RHOAI.
 
 ---
 

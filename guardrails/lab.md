@@ -1,6 +1,6 @@
 # Guardrails Demo — Putting Guardrails Under Pressure
 
-> **Where you are:** `[ Act 1: Baseline ]` → `[ ● Guardrails Demo ]` → `[ Act 2: Novel ]`
+> **Where you are:** `[ 02 Baseline ]` → `[ ● Guardrails Demo ]` → `[ 03 Novel ]`
 
 **Duration**: ~8 minutes · **Runs after**: Act 1 Garak probes · **Needs cluster?** No
 

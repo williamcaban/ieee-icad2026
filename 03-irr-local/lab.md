@@ -1,6 +1,6 @@
 # Section 03 — IRR/IAA Custom Benchmark
 
-> **Where you are:** `[ 01 Setup ] → [ Act 1: Baseline ] → [ ● Act 2: Novel ] → [ Act 3: MCP Compare ]`
+> **Where you are:** `[ 01 Setup ] → [ 02 Baseline ] → [ ● 03 Novel ] → [ 04 Compare ]`
 
 **Duration**: 12 minutes · **Needs cluster?** No — entirely laptop-side
 
@@ -8,13 +8,11 @@
 
 ## What This Section Accomplishes
 
-You validate the *trustworthiness* of a human-annotated safety dataset using Inter-Rater Reliability (IRR) metrics, then produce a benchmark specification that Section 04 registers on the cluster.
+You validate the *trustworthiness* of a human-annotated safety dataset using Inter-Rater Reliability (IRR) metrics, then register your novel benchmark as an EvalHub collection. Act 3 uses this collection in the side-by-side comparison.
 
-**Why does this matter before Section 04?**
+In Act 1 you ran benchmarks and got scores. But a score is only meaningful if the benchmark's labels are trustworthy. If three human annotators labelled a text differently, which label does the model's score depend on?
 
-In Section 02 you ran benchmarks and got scores. But a score is only meaningful if the benchmark's labels are trustworthy. If three human annotators labelled a text differently, which label does the model's score depend on?
-
-This section answers that question, then builds a clean benchmark from only the labels that annotators agreed on.
+This section answers that question, then registers a clean benchmark from only the labels that annotators agreed on.
 
 ---
 
@@ -55,7 +53,7 @@ The same logic applies to safety labels. If your three annotators can't agree wh
               │
               ▼
      register_benchmark.py
-     (Section 04 uploads this)
+     (registers as EvalHub collection for Act 3)
 ```
 
 ---
@@ -65,7 +63,7 @@ The same logic applies to safety labels. If your three annotators can't agree wh
 - Understand why label reliability matters before trusting evaluation scores.
 - Run `compute_irr.py` and interpret Cohen's Kappa and Krippendorff's Alpha.
 - Identify texts where all annotators disagreed — and understand why excluding them is principled, not arbitrary.
-- Produce `irr_report.json` as the input artifact for Section 04.
+- Register your novel benchmark as an EvalHub collection for comparison in Act 3.
 
 ---
 
@@ -133,9 +131,9 @@ Recommendation: REGISTER
 
 | Metric | Value | Interpretation |
 |--------|-------|---------------|
-| α = 0.8118 | STRONG | Labels are reliable — the benchmark is trustworthy |
+| α = 0.8118 | STRONG | Labels are reliable: the benchmark is trustworthy |
 | κ (A1 vs A2) = 0.67 | Moderate | These two agree more than chance, but there's noise |
-| κ (A2 vs A3) = 0.38 | Fair/poor | A2 and A3 disagree systematically — investigate why |
+| κ (A2 vs A3) = 0.38 | Fair/poor | A2 and A3 disagree systematically: investigate why |
 
 > **So what?** An α of 0.81 means this benchmark can be used as ground truth with high confidence. If α were 0.55, you'd need to either re-annotate the contested items or discard the benchmark entirely — any model score against it would be measuring label noise, not safety.
 
@@ -143,27 +141,32 @@ Recommendation: REGISTER
 
 ---
 
-## Step 3 — Preview the Benchmark Spec (2 min)
+## Step 3 — Register the Novel Benchmark Collection (3 min)
+
+Register your IRR-validated benchmark as an EvalHub collection:
 
 ```bash
-python3 scripts/register_benchmark.py --dry-run
+python3 scripts/register_benchmark.py
 ```
 
-This shows exactly what Section 04 will upload to EvalHub — including the `irr_metadata` block that embeds the reliability evidence directly in the benchmark record.
+Expected output:
 
-```json
-{
-  "spec": {
-    "irr_metadata": {
-      "krippendorff_alpha": 0.8118,
-      "pairwise_kappa": {...},
-      "ambiguous_excluded": 0
-    }
-  }
-}
+```
+Alpha = 0.8118 — OK to register.
+Building BenchmarkSpec for: workshop-irr-safety-v1
+  Registered as EvalHub collection: workshop-irr-safety-v1
+  Run it with: evalhub collections run workshop-irr-safety-v1 \
+      --model-url $MODEL_ENDPOINT --model-name $MODEL_NAME --wait
 ```
 
-This makes the reliability evidence an *artifact* of the benchmark, not a separate document. Anyone using this benchmark later can see exactly how trustworthy it is.
+Verify registration:
+
+```bash
+evalhub collections list
+# Should show: workshop-irr-safety-v1
+```
+
+The reliability evidence (α = 0.81, excluded items, annotator pairs) is embedded in the collection description. Anyone using this collection can see the quality gate that was applied before registration.
 
 ---
 
@@ -200,9 +203,9 @@ print('PASS')
 
 ## What You've Built
 
-You now have `irr_report.json` — a machine-readable proof that your benchmark labels meet the reliability threshold for evaluation use. This file contains the raw annotations, the computed metrics, the excluded items, and the clean benchmark items.
+You now have `irr_report.json` and a registered EvalHub collection (`workshop-irr-safety-v1`). The reliability evidence is embedded in the collection record, not a separate document.
 
-**In Section 04**, this file travels to the cluster where it becomes a registered benchmark that any team member can reference in an `evalhub eval run` command — with the reliability evidence embedded and auditable.
+**In Act 3**, the comparison notebook submits both the established baseline and this novel collection to EvalHub, retrieves metric scores from both, and plots them side by side.
 
 ---
 
@@ -212,4 +215,4 @@ You now have `irr_report.json` — a machine-readable proof that your benchmark 
 
 **Alpha very low (< 0.50)** — You may have modified the CSV. Run `bash reset.sh` to restore originals.
 
-**`irr_report.json` not found when starting Section 04** — Complete this section first.
+**`irr_report.json` not found** — Run `python3 scripts/compute_irr.py` first.

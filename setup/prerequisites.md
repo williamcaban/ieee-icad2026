@@ -62,21 +62,6 @@ export MODEL_NAME="<model-id-as-registered-in-vLLM>"
 export OPENAI_API_KEY="<your-token-if-required>"
 ```
 
----
-
-## Optional: evalhub-mcp Binary
-
-The `evalhub-mcp` binary is required for Section 04 (Act 3). It is automatically installed by `01-setup/setup.sh` using Homebrew if available, or by downloading from GitHub Releases.
-
-Manual install (if `setup.sh` fails):
-```bash
-# Homebrew
-brew install eval-hub/evalhub/evalhub-mcp
-
-# Or: GitHub release (macOS ARM64 example)
-curl -L https://github.com/eval-hub/eval-hub/releases/latest/download/evalhub-mcp-darwin-arm64 \
-  -o /usr/local/bin/evalhub-mcp && chmod +x /usr/local/bin/evalhub-mcp
-```
 
 ---
 

@@ -9,8 +9,8 @@
 
 1. Activate the `uv` virtual environment (dependencies pre-installed by `uv sync`)
 2. Configure your model endpoint in `.workshop-env` (OpenRouter, Ollama, or vLLM)
-3. Run `setup.sh` — starts `eval-hub-server` on `localhost:18080`, registers providers, installs `evalhub-mcp`
-4. Verify all tools respond: `lm_eval`, `garak`, `evalhub`, `evalhub-mcp`
+3. Run `setup.sh` — starts `eval-hub-server` on `localhost:18080` and registers lm-eval and garak providers
+4. Verify all tools respond: `lm_eval`, `garak`, `evalhub`
 
 ---
 
@@ -21,8 +21,7 @@ Your laptop (everything runs here)
   lm_eval ──────────► model endpoint (OpenRouter / Ollama / vLLM)
   garak   ──────────► model endpoint (adversarial probes)
   evalhub CLI ──────► eval-hub-server (localhost:18080)
-  evalhub-mcp ──────► eval-hub-server (localhost:18080)  [Act 3]
-```
+  ```
 
 No Kubernetes. No cluster credentials. No `oc` CLI.
 
@@ -34,5 +33,5 @@ No Kubernetes. No cluster credentials. No `oc` CLI.
 |------|---------|
 | `README.md` | This file |
 | `lab.md` | Step-by-step instructions |
-| `setup.sh` | Starts eval-hub-server, registers providers, installs evalhub-mcp |
+| `setup.sh` | Starts eval-hub-server and registers lm-eval and garak providers |
 | `reset.sh` | Clears `.workshop-env` and stops background servers |

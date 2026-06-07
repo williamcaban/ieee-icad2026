@@ -84,7 +84,7 @@ cd 01-setup && bash setup.sh
 ├── uv.lock                      # locked versions
 ├── .workshop-env.example        # credential template — 3 endpoint options
 │
-├── 01-setup/                    # 12 min │ Start eval-hub-server + install evalhub-mcp
+├── 01-setup/                    # 12 min │ Start eval-hub-server, register providers
 ├── 02-local-evaluation/         # 22 min │ Act 1: BBQ + MMLU + Garak baselines
 │   └── configs/
 ├── guardrails/                  # ~8 min │ NeMo Guardrails demo (after Act 1 Garak)
@@ -123,7 +123,6 @@ cd 01-setup && bash setup.sh
 bash 01-setup/setup.sh
 # Starts eval-hub-server on localhost:18080
 # Registers lm-eval and garak providers
-# Installs evalhub-mcp binary for Act 3
 
 evalhub health
 evalhub providers list
@@ -189,7 +188,7 @@ evalhub eval run \
   --param limit=5 --wait
 ```
 
-### Act 3 — MCP Comparison (Section 04)
+### Act 3 — Comparison (Section 04)
 
 ```bash
 cd 04-compare && bash setup.sh

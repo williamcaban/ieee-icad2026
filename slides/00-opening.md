@@ -159,7 +159,6 @@ Today you do all three, with a real model.
 - Runs evaluations through pluggable providers: `lm-eval`, `garak`, `lighteval`
 - Stores every result with full provenance: model, framework version, timestamp, config
 - Same API on your laptop (`localhost:18080`) and on Kubernetes (swap `base_url`)
-- MCP server exposes evaluations to any AI coding assistant or custom script
 
 <div class="callout">
 
@@ -286,7 +285,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 |:-----|:------------|---------|------|
 | **1. Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | 22 min |
 | **2. Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | 18 min |
-| **3. MCP Comparison** | Python notebook calls MCP server, compare both, plot the result | 04 | 23 min |
+| **3. Comparison** | Jupyter notebook calls EvalHub REST API, compare both approaches, plot the result | 04 | 23 min |
 
 ---
 
@@ -319,11 +318,11 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 ---
 
 <!-- Slide 11: Act 3 detail -->
-## Act 3: Side-by-Side Comparison via MCP
+## Act 3: Side-by-Side Comparison
 
 `Section 04`
 
-- A self-contained **Python/Jupyter notebook** calls the EvalHub MCP server directly, no framework, just `requests` and JSON-RPC 2.0.
+- A **Python/Jupyter notebook** calls the EvalHub REST API directly to submit both approaches, retrieve full metric scores, and plot a publication-ready comparison.
 
 - Submit both approaches. Poll until complete. Plot the comparison. Export a publication-ready figure.
 
@@ -342,7 +341,6 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 | `garak` | Adversarial probe framework | Systematic red-teaming baseline |
 | `eval-hub-server` | Local eval orchestrator | Reproducible tracking, same API as cluster |
 | `evalhub` CLI | Submit / retrieve jobs | Identical on laptop and Kubernetes |
-| `evalhub-mcp` | MCP server | Programmable interface for Act 3 notebook |
 
 `uv sync` pins every version, bit-for-bit reproducible.
 
@@ -355,7 +353,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 SECTIONS 01–04 (your laptop — everything runs here)
 ─────────────────────────────────────────────────────
 
-Jupyter / Python ──► evalhub-mcp (localhost:3001) [Act 3]
+Jupyter / Python ──► evalhub (localhost:3001) [Act 3]
 
 evalhub CLI ───────► eval-hub-server (localhost:18080)
                            │
@@ -376,7 +374,7 @@ evalhub CLI ───────► eval-hub-server (localhost:18080)
 Same commands. Same benchmark IDs. Same MCP notebook.
 
 ```
-evalhub CLI / MCP ──► EvalHub on RHOAI cluster
+evalhub CLI ──► EvalHub on RHOAI cluster
                              │
                       LMEvalJob pods ──► any OpenAI-compatible endpoint
                              │
@@ -416,7 +414,7 @@ cd 01-setup && bash setup.sh
 
 - What `setup.sh` does?
   - Starts `eval-hub-server` on `localhost:18080`,
-  - registers `lm-eval` and `garak` providers, installs `evalhub-mcp`
+  - registers `lm-eval` and `garak` providers, installs `evalhub`
 
 ---
 

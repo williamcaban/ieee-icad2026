@@ -1,8 +1,8 @@
 # Section 01 — Environment Setup
 
-> **Where you are:** `[ ● 01 Setup ] → [ Act 1: Baseline ] → [ Act 2: Novel ] → [ Act 3: MCP Compare ]`
+> **Where you are:** `[ ● 01 Setup ] → [ 02 Baseline ] → [ 03 Novel ] → [ 04 Compare ]`
 
-**Duration**: 10 minutes · **Needs cluster?** No — laptop only
+**Duration**: 12 minutes · **Needs cluster?** No — laptop only
 
 ---
 
@@ -51,7 +51,7 @@ evalhub version                 # Expected: evalhub 0.4.x
 |------|--------------------------|
 | `lm_eval` | Runs curated safety benchmarks against any OpenAI-compatible model endpoint |
 | `garak` | Systematically probes models with adversarial inputs to find exploitable weaknesses |
-| `evalhub` | CLI for submitting evaluation jobs and reading results — works identically locally and on Kubernetes |
+| `evalhub` | CLI for submitting evaluation jobs and reading results: works identically locally and on Kubernetes |
 
 ---
 

@@ -11,12 +11,12 @@ Marp-compatible Markdown presentations (one per section). Each slide deck:
 ## Files
 
 | File | Section | When to show |
-|------|---------|-------------|
+|:-----|:--------|:------------|
 | `00-opening.md` | Opening | Before Section 01 `setup.sh` |
 | `01-setup-slides.md` | Setup | Immediately before participants run `setup.sh` |
 | `02-local-eval-slides.md` | Local evaluation | Before Track A; again before Track B |
 | `03-irr-slides.md` | IRR benchmark | After the break. Before Section 03 |
-| `04-mcp-slides.md` | MCP comparison | Before Section 04 |
+| `04-compare-slides.md` | Act 3: Side-by-Side Comparison | Before Section 04 |
 
 ---
 

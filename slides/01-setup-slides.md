@@ -30,11 +30,11 @@ style: |
 
 <div class="journey">
 
-`[ ● 01 Setup ]` → `[ Act 1: Baseline ]` → `[ Act 2: Novel ]` → `[ Act 3: Compare ]`
+`[ ● 01 Setup ]` → `[ 02 Baseline ]` → `[ 03 Novel ]` → `[ 04 Compare ]`
 
 </div>
 
-- **Goal:** One working `evalhub` CLI pointed at a live local server, and `evalhub-mcp` ready for Act 3.  
+- **Goal:** One working `evalhub` CLI pointed at a live local server.  
 - **Time:** 12 minutes
 - **Needs cluster?** No, everything runs on your laptop.
 
@@ -50,7 +50,7 @@ bash setup.sh
      ├── 3. Export OPENAI_API_KEY (alias required by lm-eval internals)
      ├── 4. Start eval-hub-server on localhost:18080
      ├── 5. Register providers: lm_evaluation_harness, garak
-     └── 6. Install evalhub-mcp binary (for Act 3)
+
 ```
 
 The script is **idempotent**, safe to re-run.
@@ -66,7 +66,6 @@ If anything breaks, `bash setup.sh` resets you.
 | `garak` | Adversarial probe framework | Fuzzing for prompts |
 | `eval-hub-server` | Local evaluation orchestrator | MLflow for safety evals |
 | `evalhub` CLI | Submit jobs, read results | `mlflow run` equivalent |
-| `evalhub-mcp` | MCP server for EvalHub | HTTP interface for Act 3 notebook |
 
 - `uv sync` pins every dependency at exact versions: no drift, no "works on my machine."
 

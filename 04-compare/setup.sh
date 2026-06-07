@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 04-mcp-compare/setup.sh — Verify prerequisites for Act 3
+# 04-compare/setup.sh — Verify prerequisites for Act 3
 #
 # Checks that eval-hub-server is running and that both collections used
 # in the comparison are registered. No additional servers needed.
@@ -47,7 +47,7 @@ echo ""
 echo "  EvalHub: ${EVALHUB}"
 echo ""
 echo "  Ready for Act 3:"
-echo "    cd 04-mcp-compare"
+echo "    cd 04-compare"
 echo "    python3 compare_approaches.py"
 echo "    # or: jupyter lab compare_approaches.ipynb"
 echo ""

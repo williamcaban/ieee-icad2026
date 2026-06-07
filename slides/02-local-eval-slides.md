@@ -30,7 +30,7 @@ style: |
 
 <div class="journey">
 
-`[ 01 Setup ]` → `[ ● Act 1: Baseline ]` → `[ Act 2: Novel ]` → `[ Act 3: Compare ]`
+`[ 01 Setup ]` → `[ ● 02 Baseline ]` → `[ 03 Novel ]` → `[ 04 Compare ]`
 
 </div>
 
@@ -169,7 +169,7 @@ After both tracks complete, save a structured summary for Act 3:
 evalhub eval results --format json > results/baseline_summary.json
 ```
 
-- `results/baseline_summary.json` is the input to the Act 3 MCP comparison notebook.
+- `results/baseline_summary.json` is the input to the Act 3 comparison notebook.
 
 ---
 
@@ -177,7 +177,7 @@ evalhub eval results --format json > results/baseline_summary.json
 
 - ✅ Reproducible bias baseline (BBQ, MMLU): citable against published benchmarks  
 - ✅ Adversarial baseline (Garak): systematic probe coverage, OWASP-mapped  
-- ✅ Both stored in `eval-hub-server`: queryable via CLI and MCP  
+- ✅ Both stored in `eval-hub-server`: queryable via CLI and the REST API  
 - ✅ `results/baseline_summary.json`: the Act 3 comparison input
 
 <div class="callout">

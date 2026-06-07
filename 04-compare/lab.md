@@ -1,6 +1,6 @@
 # Act 3: Side-by-Side Evaluation Comparison
 
-> **Where you are:** `[ Act 1: Baseline ] → [ Act 2: Novel ] → [ ● Act 3: Compare ]`
+> **Where you are:** `[ 01 Setup ] → [ 02 Baseline ] → [ 03 Novel ] → [ ● 04 Compare ]`
 
 **Duration**: 23 minutes · **Needs cluster?** No — entirely laptop-side
 

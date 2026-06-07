@@ -26,11 +26,11 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
 ---
 
-# Act 3 — Side-by-Side Evaluation Comparison
+# Act 3: Side-by-Side Evaluation Comparison
 
 <div class="journey">
 
-`[ Act 1: Baseline ]` → `[ Act 2: Novel ]` → `[ ● Act 3: Compare ]`
+`[ 01 Setup ]` → `[ 02 Baseline ]` → `[ 03 Novel ]` → `[ ● 04 Compare ]`
 
 </div>
 
@@ -42,11 +42,15 @@ You have two registered approaches in EvalHub. Act 3 submits both through the RE
 
 You claimed your IRR-validated collection is a more principled approach than running a raw benchmark. Now you need to show it:
 
-- **Same model** — controls for inference variation
-- **Same infrastructure** — controls for environment differences
-- **Same evaluation engine** — controls for framework differences
+- **Same model**: controls for inference variation
+- **Same infrastructure**: controls for environment differences
+- **Same evaluation engine**: controls for framework differences
+
+<div class="warning">
 
 What remains is **methodological difference**. That's the contribution.
+
+</div>
 
 ---
 
@@ -65,12 +69,12 @@ APPROACH_B = {
 }
 ```
 
-Approach A submits a single benchmark directly.  
-Approach B submits the IRR-validated collection — with α ≥ 0.67 as the quality gate.
+- `Approach A` submits a single benchmark directly.  
+- `Approach B` submits the IRR-validated collection, with α ≥ 0.67 as the quality gate.
 
 ---
 
-## Three REST Calls — That's the Interface
+## Three REST Calls as the Interface
 
 ```python
 import requests
@@ -136,10 +140,12 @@ Every metric the lm-eval adapter computed is in `metrics`. The comparison notebo
 
 Two panels:
 
-**Left** — Primary score bar chart: overall `acc` for each approach  
-**Right** — Per-metric grouped chart: `acc`, `accuracy_amb`, `amb_bias_score`, `accuracy_disamb` side by side
+- **Left** panel: Primary score bar chart: overall `acc` for each approach  
+- **Right** panel: Per-metric grouped chart: `acc`, `accuracy_amb`, `amb_bias_score`, `accuracy_disamb` side by side
 
-Both approaches run the same underlying benchmark. The scores are identical. **The contribution is the methodology** — the IRR quality gate that justifies using these labels.
+- Both approaches run the same underlying benchmark. 
+  - The scores are identical. 
+  - **The contribution is the methodology**, the IRR quality gate that justifies using these labels.
 
 <div class="callout">
 
@@ -151,10 +157,10 @@ Both approaches run the same underlying benchmark. The scores are identical. **T
 
 ## What You Have Built
 
-✅ Both approaches submitted and evaluated on the same model and infrastructure  
-✅ `comparison_plot.png` — two-panel figure suitable for a paper or poster  
-✅ `comparison_report.json` — structured data for supplementary materials  
-✅ Full audit trail: job IDs link back to EvalHub run records
+- ✅ Both approaches submitted and evaluated on the same model and infrastructure  
+- ✅ `comparison_plot.png`: two-panel figure suitable for a paper or poster  
+- ✅ `comparison_report.json`: structured data for supplementary materials  
+- ✅ Full audit trail: job IDs link back to EvalHub run records
 
 <div class="callout">
 
@@ -166,11 +172,11 @@ Both approaches run the same underlying benchmark. The scores are identical. **T
 
 ## At Scale: Kubernetes (Pre-Recorded Demo)
 
-The same `evalhub eval run` commands and the same REST API paths work against EvalHub on RHOAI — only `EVALHUB_ENDPOINT` changes:
+The same `evalhub eval run` commands and the same REST API paths work against EvalHub on K8s, only `EVALHUB_ENDPOINT` changes:
 
 ```bash
 export EVALHUB_ENDPOINT="https://workshop-evalhub.apps.cluster.example.com"
-# The notebook is identical — no other change
+# The notebook is identical (no other change required)
 ```
 
 Running as `LMEvalJob` pods on Kubernetes gives persistent storage, RHOAI Dashboard visibility, and governance artifact export.
