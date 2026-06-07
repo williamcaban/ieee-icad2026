@@ -1,63 +1,62 @@
-# Setup — Pre-Workshop Environment Provisioning
+# Setup — Optional Cluster Provisioning for the Closing Demo
 
-This directory contains scripts for provisioning the complete workshop environment. These scripts are run by workshop **organizers and facilitators** — not by participants.
+This directory contains scripts for provisioning an RHOAI cluster to record the **pre-recorded Kubernetes demo** shown in the closing segment of the workshop.
 
----
-
-## When to Run
-
-Run `platform-setup.sh` at least **24 hours before the workshop** to allow time for:
-
-- Model serving pods to pull images and become ready (can take 15-30 minutes for a multi-GB model).
-- EvalHub operator to index the built-in benchmark catalog.
-- Storage provisioning for EvalHub result persistence.
-
-Run `verify-environment.sh` **30 minutes before the workshop** to confirm everything is healthy after the overnight period.
+> **Participants do not need these scripts.** The hands-on lab sections (01–04) run entirely on the laptop. These scripts are for facilitators who want to demonstrate the production-scale pattern on a live cluster.
 
 ---
 
-## What These Scripts Provision
+## When to Use
 
-### `platform-setup.sh`
+Run `platform-setup.sh` **at least 24 hours before recording the demo** to allow time for:
+- EvalHub operator to index the built-in benchmark catalog
+- Model serving pods to pull images and become ready
+- Storage provisioning for EvalHub result persistence
 
-1. Creates the `workshop-eval` namespace with appropriate RBAC for participants.
-2. Applies the EvalHub custom resource (CR) to deploy the evaluation platform.
-3. Deploys a `granite-3-2b` model serving endpoint using vLLM on OpenShift AI.
-4. Waits for all pods to reach `Running` or `Ready` state.
-5. Writes `~/.workshop-env` with `EVALHUB_ENDPOINT`, `MODEL_ENDPOINT`, `KFP_ENDPOINT`, and `EVALHUB_TOKEN`.
-6. Runs a smoke test against each endpoint.
-
-### `verify-environment.sh`
-
-Checks the following and reports pass/fail for each:
-
-- `oc` CLI installed and cluster reachable.
-- `workshop-eval` namespace exists.
-- EvalHub CR `READY: True`.
-- Model endpoint `/v1/health` returns HTTP 200.
-- KubeFlow Pipelines API reachable.
-- Required Python packages installable from pip.
-- `~/.workshop-env` file exists and is populated.
+Run `verify-environment.sh` to confirm the cluster is healthy before recording.
 
 ---
 
-## Prerequisites for Running Setup Scripts
+## What `platform-setup.sh` Provisions
 
-See `prerequisites.md` for the full list. In summary:
+| Step | What it does |
+|------|-------------|
+| 1 | Verify prerequisites (`oc` CLI, cluster-admin access, EvalHub CRD) |
+| 2 | Enable `permitOnline: allow` in DSC (HuggingFace dataset downloads) |
+| 3 | Create `workshop-eval` namespace with required labels |
+| 4 | Create `workshop-sa` service account + `evalhub-evaluator` RBAC |
+| 5 | Deploy platform EvalHub CR in `redhat-ods-applications` (BFF discovery) |
+| 6 | Deploy tenant EvalHub CR in `workshop-eval` |
+| 7 | Configure BFF discovery RBAC in `redhat-ods-applications` |
+| 8 | Create `openrouter-credentials` secret (or Ollama/vLLM endpoint) |
+| 9 | Write `.workshop-env` with live cluster endpoints |
 
-- A running OpenShift 4.14+ cluster with RHOAI 2.10+ installed.
-- Cluster admin credentials (`oc login` successful).
-- Docker or Podman available (for model serving image pull verification).
-- Python 3.10+ with pip.
-- At least 40 GB of GPU memory available in the cluster for model serving (one A10G or equivalent).
+## What `verify-environment.sh` Checks
+
+- `oc` CLI installed and cluster reachable
+- `workshop-eval` namespace exists
+- EvalHub CR `READY: True` and pods running
+- EvalHub API endpoint responds with HTTP 200
+- Model serving endpoint responds
+- Built-in collections available
 
 ---
 
-## Files in This Directory
+## Prerequisites
+
+- OpenShift 4.14+ cluster with **RHOAI 3.4+** and TrustyAI component (`Managed`)
+- Cluster admin credentials (`oc login` successful)
+- Python 3.12+, `uv`, `curl`, `jq`
+
+Model inference: set `OPENROUTER_API_KEY` before running, or configure Ollama/vLLM as the model endpoint in the generated `.workshop-env`.
+
+---
+
+## Files
 
 | File | Purpose |
 |------|---------|
 | `README.md` | This file |
-| `prerequisites.md` | Full list of required tools and access |
-| `platform-setup.sh` | Full cluster provisioning script |
-| `verify-environment.sh` | Environment health check script |
+| `prerequisites.md` | Full participant prerequisites (no cluster required) |
+| `platform-setup.sh` | Cluster provisioning for the demo |
+| `verify-environment.sh` | Pre-demo health check |

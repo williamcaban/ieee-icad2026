@@ -15,7 +15,7 @@ set -euo pipefail
 #   5. evalhub-cr-reader RBAC in redhat-ods-applications (for BFF)
 #   6. DSC permitOnline: allow (required for HuggingFace dataset downloads)
 #   7. OpenRouter credentials secret
-#   8. DataSciencePipelinesApplication (for Section 06 reference)
+#   8. .workshop-env file with cluster endpoints
 # =============================================================================
 
 WORKSHOP_NAMESPACE="workshop-eval"
@@ -284,43 +284,11 @@ else
 fi
 
 # =============================================================================
-# Step 9: DataSciencePipelinesApplication (for Section 06 pipeline reference)
+# Step 9: Generate .workshop-env with live cluster endpoints
 # =============================================================================
-info "Step 9: Deploying DataSciencePipelinesApplication..."
-
-oc apply -f - <<DSPA
-apiVersion: datasciencepipelinesapplications.opendatahub.io/v1
-kind: DataSciencePipelinesApplication
-metadata:
-  name: dspa-workshop
-  namespace: ${WORKSHOP_NAMESPACE}
-spec:
-  apiServer:
-    deploy: true
-    enableSamplePipeline: false
-  database:
-    disableHealthCheck: false
-    mariaDB:
-      deploy: true
-      pipelineDBName: mlpipeline
-      username: mlpipeline
-  objectStorage:
-    disableHealthCheck: false
-    minio:
-      deploy: true
-      image: quay.io/opendatahub/minio:RELEASE.2019-08-14T20-37-41Z-license-compliance
-DSPA
-
-ok "DataSciencePipelinesApplication applied."
-
-# =============================================================================
-# Step 10: Generate .workshop-env with live endpoints
-# =============================================================================
-info "Step 10: Writing ${WORKSHOP_ENV_FILE}..."
+info "Step 9: Writing ${WORKSHOP_ENV_FILE}..."
 
 EVALHUB_ROUTE=$(oc get route workshop-evalhub -n "${WORKSHOP_NAMESPACE}" \
-  -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
-KFP_ROUTE=$(oc get route ds-pipeline-dspa-workshop -n "${WORKSHOP_NAMESPACE}" \
   -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
 WORKSHOP_TOKEN=$(oc create token workshop-sa -n "${WORKSHOP_NAMESPACE}" \
   --duration=24h 2>/dev/null || echo "")
@@ -345,9 +313,6 @@ export MODEL_NAME_A="liquid/lfm-2.5-1.2b-instruct:free"
 export MODEL_NAME_B="meta-llama/llama-3.3-70b-instruct:free"
 export MODEL_NAME="\${MODEL_NAME_A}"
 export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-sk-or-v1-REPLACE-WITH-YOUR-KEY}"
-
-# KubeFlow Pipelines (for Section reference)
-export KFP_ENDPOINT="${KFP_ROUTE:+https://${KFP_ROUTE}}"
 
 # RHOAI Dashboard
 export RHOAI_DASHBOARD="${DASHBOARD_ROUTE:+https://${DASHBOARD_ROUTE}}"

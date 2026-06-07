@@ -42,10 +42,10 @@ done
 PYTHON_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 PYTHON_MAJ=$(echo "${PYTHON_VER}" | cut -d. -f1)
 PYTHON_MIN=$(echo "${PYTHON_VER}" | cut -d. -f2)
-if [[ ${PYTHON_MAJ} -ge 3 && ${PYTHON_MIN} -ge 10 ]]; then
-  pass "Python version ${PYTHON_VER} meets requirement (3.10+)"
+if [[ ${PYTHON_MAJ} -ge 3 && ${PYTHON_MIN} -ge 12 ]]; then
+  pass "Python version ${PYTHON_VER} meets requirement (3.12+)"
 else
-  fail "Python version ${PYTHON_VER} is below required 3.10. Upgrade Python."
+  fail "Python version ${PYTHON_VER} is below required 3.12. Upgrade Python."
 fi
 
 echo ""
@@ -59,7 +59,7 @@ if [[ -f "${WORKSHOP_ENV_FILE}" ]]; then
   pass "Workshop env file exists: ${WORKSHOP_ENV_FILE}"
   source "${WORKSHOP_ENV_FILE}"
 
-  for var in WORKSHOP_NAMESPACE EVALHUB_ENDPOINT MODEL_ENDPOINT KFP_ENDPOINT EVALHUB_TOKEN; do
+  for var in WORKSHOP_NAMESPACE EVALHUB_ENDPOINT MODEL_ENDPOINT EVALHUB_TOKEN; do
     val="${!var:-}"
     if [[ -n "${val}" && "${val}" != *"PLACEHOLDER"* ]]; then
       pass "${var} is set: ${val:0:60}..."
@@ -183,29 +183,7 @@ fi
 echo ""
 
 # =============================================================================
-# Check 8: KubeFlow Pipelines endpoint
-# =============================================================================
-info "Checking KubeFlow Pipelines endpoint..."
-
-if [[ -n "${KFP_ENDPOINT:-}" ]]; then
-  HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
-    "${KFP_ENDPOINT}/apis/v2beta1/pipelines" 2>/dev/null || echo "000")
-  if [[ "${HTTP_CODE}" =~ ^(200|401|403)$ ]]; then
-    pass "KFP API reachable (HTTP ${HTTP_CODE}): ${KFP_ENDPOINT}"
-    if [[ "${HTTP_CODE}" == "401" || "${HTTP_CODE}" == "403" ]]; then
-      warn "KFP requires authentication. Participants will need to log in via browser."
-    fi
-  else
-    fail "KFP API returned HTTP ${HTTP_CODE}. Endpoint: ${KFP_ENDPOINT}/apis/v2beta1/pipelines"
-  fi
-else
-  fail "KFP_ENDPOINT not set. Source ${WORKSHOP_ENV_FILE} first."
-fi
-
-echo ""
-
-# =============================================================================
-# Check 9: Built-in collections available
+# Check 8: Built-in collections available
 # =============================================================================
 info "Checking built-in EvalHub collections..."
 
