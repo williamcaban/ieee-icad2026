@@ -98,6 +98,7 @@ Both baselines are needed for a complete picture.
 
 ```bash
 evalhub eval run \
+  --name "act1-bbq-baseline" \
   --provider lm_evaluation_harness \
   --benchmark bbq_generate \
   --model-url "${MODEL_ENDPOINT}" \
@@ -140,6 +141,7 @@ same risk domain through a different lens.
 
 ```bash
 evalhub eval run \
+  --name "act1-garak-baseline" \
   --provider garak \
   --benchmark "lmrc.Bullying" \
   --model-url "${MODEL_ENDPOINT}" \

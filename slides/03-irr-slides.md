@@ -134,6 +134,7 @@ Run against the same model used in Act 1:
 
 ```bash
 evalhub eval run \
+  --name "act2-irr-novel" \
   --provider lm_evaluation_harness \
   --benchmark icad2026-irr-safety \
   --model-url "${MODEL_ENDPOINT}" \

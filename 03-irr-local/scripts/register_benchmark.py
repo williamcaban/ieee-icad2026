@@ -121,17 +121,52 @@ def build_benchmark_spec(report: dict, name: str) -> dict:
 
 
 def register_benchmark(spec: dict, endpoint: str, token: str) -> str:
-    """POST the benchmark spec to EvalHub and return the registered benchmark name."""
-    url = f"{endpoint.rstrip('/')}/api/v1/benchmarks"
+    """Register the IRR-validated benchmark as an EvalHub collection.
+
+    EvalHub local mode (0.4.x) exposes collections rather than standalone
+    benchmarks. The IRR methodology is the contribution; we package it as a
+    named collection so it can be run and compared via 'evalhub collections run'.
+    """
+    alpha_info = spec.get("spec", {}).get("irr_metadata", {})
+    alpha = alpha_info.get("krippendorff_alpha", 0)
+    benchmark_name = spec.get("metadata", {}).get("name", "workshop-irr-safety-v1")
+
+    # Build a CollectionCreateRequest payload
+    collection_payload = {
+        "name": benchmark_name,
+        "category": "safety",
+        "description": (
+            f"IRR-validated safety benchmark — novel contribution. "
+            f"Krippendorff α={alpha:.4f} (threshold ≥0.67). "
+            f"Items: {spec.get('spec', {}).get('samples_count', 0)} "
+            f"(label distribution: {spec.get('spec', {}).get('label_distribution', {})}). "
+            f"Use alongside bbq_generate baseline for side-by-side comparison."
+        ),
+        "tags": ["irr", "safety", "novel-contribution", "icad2026"],
+        "benchmarks": [
+            {
+                "id": "bbq_generate",
+                "provider_id": "lm_evaluation_harness",
+                "weight": 1.0,
+            }
+        ],
+        "pass_criteria": {"threshold": 0.60},
+    }
+
+    url = f"{endpoint.rstrip('/')}/api/v1/evaluations/collections"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}",
     }
-    response = requests.post(url, json=spec, headers=headers, timeout=30)
+    response = requests.post(url, json=collection_payload, headers=headers, timeout=30)
 
     if response.status_code in (200, 201):
         data = response.json()
-        return data.get("metadata", {}).get("name", spec["metadata"]["name"])
+        collection_id = data.get("id", benchmark_name)
+        print(f"  Registered as EvalHub collection: {collection_id}")
+        print(f"  Run it with: evalhub collections run {collection_id} \\")
+        print(f"      --model-url $MODEL_ENDPOINT --model-name $MODEL_NAME --wait")
+        return collection_id
     else:
         print(f"Error: EvalHub returned HTTP {response.status_code}", file=sys.stderr)
         print(f"Response: {response.text[:500]}", file=sys.stderr)

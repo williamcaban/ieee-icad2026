@@ -140,20 +140,34 @@ echo "  Stop: kill \$(cat /tmp/evalhub-local.pid)"
 echo ""
 
 # =============================================================================
-# Step 4: Install evalhub-mcp binary (needed for Act 3 — Section 04)
+# Step 4: Install evalhub-mcp binary (needed for Act 3)
 # =============================================================================
-info "Checking evalhub-mcp installation..."
+_install_evalhub_mcp_from_github() {
+  local ARCH OS BINARY URL
+  ARCH="$(uname -m)"
+  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  [[ "${ARCH}" == "arm64" ]] && ARCH="arm64" || ARCH="amd64"
+  BINARY="evalhub-mcp-${OS}-${ARCH}"
+  URL="https://github.com/eval-hub/eval-hub/releases/latest/download/${BINARY}"
+  info "Downloading ${BINARY} from GitHub releases..."
+  curl -fsSL --max-time 30 "${URL}" -o /usr/local/bin/evalhub-mcp && \
+    chmod +x /usr/local/bin/evalhub-mcp && \
+    ok "evalhub-mcp installed from GitHub release." || \
+    warn "GitHub release download failed. Run 04-mcp-compare/setup.sh to retry."
+}
 
+info "Checking evalhub-mcp installation..."
 if command -v evalhub-mcp >/dev/null 2>&1; then
   ok "evalhub-mcp: $(evalhub-mcp --version 2>/dev/null || echo 'installed')"
 else
-  info "Installing evalhub-mcp via Homebrew..."
   if command -v brew >/dev/null 2>&1; then
     brew install eval-hub/evalhub/evalhub-mcp 2>/dev/null && \
-      ok "evalhub-mcp installed via Homebrew." || \
-      warn "Homebrew install failed. Try the GitHub release fallback in 04-mcp-compare/setup.sh"
+      ok "evalhub-mcp installed via Homebrew." || {
+      warn "Homebrew tap unavailable — falling back to GitHub release..."
+      _install_evalhub_mcp_from_github
+    }
   else
-    warn "Homebrew not found. Run 04-mcp-compare/setup.sh for a GitHub release install."
+    _install_evalhub_mcp_from_github
   fi
 fi
 

@@ -74,7 +74,7 @@ evalhub providers list
 
 ```bash
 evalhub eval run \
-  --name "local-bbq-$(date +%s)" \
+  --name "act1-bbq-baseline" \
   --provider lm_evaluation_harness \
   --benchmark bbq_generate \
   --model-url "${MODEL_ENDPOINT}" \
@@ -93,7 +93,7 @@ tail -f /tmp/evalhub-local.log | grep -v "^{"
 
 ```bash
 evalhub eval run \
-  --name "local-mmlu-$(date +%s)" \
+  --name "act1-mmlu-baseline" \
   --provider lm_evaluation_harness \
   --benchmark mmlu_business_ethics_generative \
   --model-url "${MODEL_ENDPOINT}" \
@@ -150,7 +150,7 @@ These are *exploitability* tests. A model can score 0.80 on BBQ (good bias score
 
 ```bash
 evalhub eval run \
-  --name "local-garak-$(date +%s)" \
+  --name "act1-garak-baseline" \
   --provider garak \
   --benchmark "lmrc.Bullying" \
   --model-url "${MODEL_ENDPOINT}" \

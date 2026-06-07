@@ -85,6 +85,7 @@ This makes findings interoperable with the AI vulnerability database and easier 
 ```bash
 # Run a safety evaluation
 evalhub eval run \
+  --name "act1-bbq-baseline" \
   --provider lm_evaluation_harness \
   --benchmark bbq_generate \
   --model-url "${MODEL_ENDPOINT}" \

@@ -112,12 +112,12 @@ Run the same adversarial probe that succeeded against the bare model in Act 1:
 
 ```bash
 evalhub eval run \
+  --name "guardrails-garak-guarded" \
   --provider garak \
   --benchmark "promptinject.HijackHateHumans" \
   --model-url "${GUARDED_ENDPOINT}" \
   --model-name "${MODEL_NAME}" \
   --param generations=3 \
-  --name "guarded-promptinject" \
   --wait
 ```
 
@@ -128,7 +128,7 @@ Compare results:
 evalhub eval results <bare-job-id>
 
 # Guarded model result (just ran):
-evalhub eval results guarded-promptinject
+evalhub eval results guardrails-garak-guarded
 ```
 
 The jailbreak rail should catch the prompt-injection attempts. **The guardrail is now under pressure from the same systematic evaluation that found the original vulnerability.**

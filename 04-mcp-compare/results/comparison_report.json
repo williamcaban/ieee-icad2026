@@ -1,0 +1,22 @@
+{
+  "model": {
+    "url": "https://openrouter.ai/api/v1",
+    "name": "liquid/lfm-2.5-1.2b-instruct:free"
+  },
+  "approaches": [
+    {
+      "description": "BBQ intersectional bias \u2014 established baseline (Parrish et al. 2022)",
+      "benchmark_id": "bbq_generate",
+      "provider_id": "lm_evaluation_harness",
+      "overall_score": null,
+      "job_id": "9c66502b-a48b-4d6a-b408-d8ad4a869e30"
+    },
+    {
+      "description": "IRR-validated safety benchmark \u2014 novel contribution (\u03b1 = 0.81)",
+      "benchmark_id": "bbq_generate",
+      "provider_id": "lm_evaluation_harness",
+      "overall_score": null,
+      "job_id": "3837a2b2-0556-4e58-9164-8557753a992f"
+    }
+  ]
+}

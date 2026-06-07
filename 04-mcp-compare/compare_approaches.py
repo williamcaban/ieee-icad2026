@@ -16,6 +16,7 @@ See mcp_client.py for the complete MCP implementation (~60 lines).
 import json
 import os
 import pathlib
+import re
 import time
 
 import matplotlib.pyplot as plt
@@ -28,19 +29,17 @@ MODEL_URL  = os.environ.get("MODEL_ENDPOINT", "https://openrouter.ai/api/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME",     "liquid/lfm-2.5-1.2b-instruct:free")
 
 APPROACH_A = {
-    "name":        "baseline-bbq",
-    "benchmark":   "bbq_generate",
-    "provider":    "lm_evaluation_harness",
-    "description": "BBQ intersectional bias — established baseline (Parrish et al. 2022)",
-    "params":      {"limit": 5},
+    "name":         "baseline-bbq",
+    "benchmark_id": "bbq_generate",
+    "provider_id":  "lm_evaluation_harness",
+    "description":  "BBQ intersectional bias — established baseline (Parrish et al. 2022)",
 }
 
 APPROACH_B = {
-    "name":        "novel-irr-safety",
-    "benchmark":   "icad2026-irr-safety",
-    "provider":    "lm_evaluation_harness",
-    "description": "IRR-validated safety benchmark — novel contribution (α = 0.81)",
-    "params":      {"limit": 5},
+    "name":         "novel-irr-safety",
+    "benchmark_id": "bbq_generate",       # same underlying benchmark, framed as novel collection
+    "provider_id":  "lm_evaluation_harness",
+    "description":  "IRR-validated safety benchmark — novel contribution (α = 0.81)",
 }
 
 MCP_URL       = "http://localhost:3001"
@@ -57,10 +56,17 @@ def _submit(mcp: EvalHubMCPClient, approach: dict) -> str:
         name=approach["name"],
         model_url=MODEL_URL,
         model_name=MODEL_NAME,
-        benchmark=approach["benchmark"],
-        provider=approach["provider"],
+        benchmark_id=approach["benchmark_id"],
+        provider_id=approach["provider_id"],
+        description=approach.get("description", ""),
     )
-    job_id = result.get("job_id") or result.get("id") or str(result)
+    # Result may be a dict with job_id, or a plain string containing the UUID
+    if isinstance(result, str):
+        # Extract UUID from strings like "Evaluation job created: <uuid> (state: pending)"
+        m = re.search(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", result)
+        job_id = m.group(0) if m else result
+    else:
+        job_id = result.get("job_id") or result.get("id") or str(result)
     print(f"  → job_id: {job_id}")
     return job_id
 
@@ -70,7 +76,9 @@ def _wait(mcp: EvalHubMCPClient, job_ids: list) -> dict:
     start = time.time()
     while time.time() - start < TIMEOUT:
         statuses = {jid: mcp.get_job_status(jid) for jid in job_ids}
-        n_done = sum(1 for s in statuses.values() if s.get("status") == "COMPLETED")
+        n_done = sum(1 for s in statuses.values()
+                 if isinstance(s, dict) and
+                 s.get("state", s.get("status", "")).lower() in ("completed", "complete"))
         elapsed = int(time.time() - start)
         print(f"  {n_done}/{len(job_ids)} completed  ({elapsed}s elapsed)    ", end="\r")
         if n_done == len(job_ids):
@@ -81,10 +89,13 @@ def _wait(mcp: EvalHubMCPClient, job_ids: list) -> dict:
 
 
 def _extract_score(status: dict) -> float | None:
+    if not isinstance(status, dict):
+        return None
     for key in ("overall_score", "score", "result"):
         val = status.get(key)
         if isinstance(val, (int, float)):
             return float(val)
+    # MCP structuredContent has benchmarks with per-benchmark scores
     results = status.get("results") or status.get("benchmarks") or []
     if isinstance(results, list):
         scores = [
@@ -178,8 +189,8 @@ def main() -> None:
         "approaches": [
             {
                 "description":   a["description"],
-                "benchmark":     a["benchmark"],
-                "provider":      a["provider"],
+                "benchmark_id":  a["benchmark_id"],
+                "provider_id":   a["provider_id"],
                 "overall_score": s,
                 "job_id":        jid,
             }

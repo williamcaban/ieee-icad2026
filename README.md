@@ -134,6 +134,7 @@ evalhub providers list
 ```bash
 # BBQ intersectional bias
 evalhub eval run \
+  --name "act1-bbq-baseline" \
   --provider lm_evaluation_harness \
   --benchmark bbq_generate \
   --model-url "${MODEL_ENDPOINT}" \
@@ -142,6 +143,7 @@ evalhub eval run \
 
 # MMLU business ethics
 evalhub eval run \
+  --name "act1-mmlu-baseline" \
   --provider lm_evaluation_harness \
   --benchmark mmlu_business_ethics_generative \
   --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
@@ -149,6 +151,7 @@ evalhub eval run \
 
 # Garak adversarial probes
 evalhub eval run \
+  --name "act1-garak-baseline" \
   --provider garak \
   --benchmark "lmrc.Bullying" \
   --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
@@ -164,9 +167,11 @@ cd guardrails && bash setup.sh
 export GUARDED_ENDPOINT="http://localhost:18090/v1"
 
 # Re-run Garak against the guarded endpoint
-evalhub eval run --provider garak --benchmark "promptinject.HijackHateHumans" \
+evalhub eval run \
+  --name "guardrails-garak-guarded" \
+  --provider garak --benchmark "promptinject.HijackHateHumans" \
   --model-url "${GUARDED_ENDPOINT}" --model-name "${MODEL_NAME}" \
-  --name "guarded-promptinject" --param generations=3 --wait
+  --param generations=3 --wait
 ```
 
 ### Act 2 — Novel Contribution (Section 03)
@@ -177,6 +182,7 @@ python3 scripts/compute_irr.py        # Cohen's κ + Krippendorff's α
 python3 scripts/register_benchmark.py # Register in local EvalHub (no --dry-run)
 
 evalhub eval run \
+  --name "act2-irr-novel" \
   --provider lm_evaluation_harness \
   --benchmark icad2026-irr-safety \
   --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \

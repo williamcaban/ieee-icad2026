@@ -33,7 +33,7 @@
 - [ ] Run `bash 01-setup/setup.sh` end-to-end and verify no errors
 - [ ] Confirm `evalhub health` returns `{"status": "healthy"}`
 - [ ] Confirm `evalhub providers list` shows `lm_evaluation_harness` and `garak`
-- [ ] Test a real eval: `evalhub eval run --provider lm_evaluation_harness --benchmark bbq_generate --param limit=2 --wait`
+- [ ] Test a real eval: `evalhub eval run --name "act1-bbq-baseline" --provider lm_evaluation_harness --benchmark bbq_generate --param limit=2 --wait`
 - [ ] Verify `evalhub-mcp --version` works (installed by `01-setup/setup.sh`, or `brew install eval-hub/evalhub/evalhub-mcp`)
 - [ ] Start `evalhub-mcp` manually and verify `curl http://localhost:3001/health` responds (see Act 3 MCP server pre-flight below)
 - [ ] Run `uv run pytest tests/ -v` — all unit tests should pass; smoke tests may skip if HF offline

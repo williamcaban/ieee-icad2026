@@ -39,6 +39,20 @@ ok "eval-hub-server: http://localhost:${EVALHUB_PORT}"
 # =============================================================================
 # Step 2: Install evalhub-mcp if missing
 # =============================================================================
+_install_evalhub_mcp_from_github() {
+  local ARCH OS BINARY URL
+  ARCH="$(uname -m)"
+  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  [[ "${ARCH}" == "arm64" ]] && ARCH="arm64" || ARCH="amd64"
+  BINARY="evalhub-mcp-${OS}-${ARCH}"
+  URL="https://github.com/eval-hub/eval-hub/releases/latest/download/${BINARY}"
+  info "Downloading ${BINARY} from GitHub releases..."
+  curl -fsSL --max-time 30 "${URL}" -o /usr/local/bin/evalhub-mcp && \
+    chmod +x /usr/local/bin/evalhub-mcp && \
+    ok "evalhub-mcp installed from GitHub release." || \
+    warn "GitHub release download failed. Check network or install manually."
+}
+
 info "Checking evalhub-mcp..."
 if ! command -v evalhub-mcp >/dev/null 2>&1; then
   info "evalhub-mcp not found — installing..."
@@ -46,23 +60,12 @@ if ! command -v evalhub-mcp >/dev/null 2>&1; then
     brew install eval-hub/evalhub/evalhub-mcp 2>/dev/null && \
       ok "evalhub-mcp installed via Homebrew." || {
       warn "Homebrew install failed — trying GitHub release..."
-      _install_from_github
+      _install_evalhub_mcp_from_github
     }
   else
-    _install_from_github
+    _install_evalhub_mcp_from_github
   fi
 fi
-
-_install_from_github() {
-  ARCH="$(uname -m)"
-  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-  [[ "${ARCH}" == "arm64" ]] && ARCH="arm64" || ARCH="amd64"
-  BINARY="evalhub-mcp-${OS}-${ARCH}"
-  URL="https://github.com/eval-hub/eval-hub/releases/latest/download/${BINARY}"
-  info "Downloading ${BINARY} from GitHub releases..."
-  curl -fsSL "${URL}" -o /usr/local/bin/evalhub-mcp && chmod +x /usr/local/bin/evalhub-mcp
-  ok "evalhub-mcp installed from GitHub release."
-}
 
 ok "evalhub-mcp: $(evalhub-mcp --version 2>/dev/null || echo 'installed')"
 
