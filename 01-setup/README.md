@@ -1,44 +1,30 @@
 # Section 01 — Environment Setup
 
-**Duration**: 10 minutes
-**Mode**: Hands-on
-**Position in agenda**: 0:08 – 0:18
+**Duration**: 12 minutes · **Needs cluster?** No — laptop only  
+**Position in agenda**: 0:10 – 0:22
 
 ---
 
 ## What You Will Do
 
 1. Activate the `uv` virtual environment (dependencies pre-installed by `uv sync`)
-2. Set your OpenRouter API key in `.workshop-env`
-3. Configure the `evalhub` CLI against the workshop cluster
-4. Verify all four tools respond: `lm_eval`, `garak`, `evalhub`, `oc`
+2. Configure your model endpoint in `.workshop-env` (OpenRouter, Ollama, or vLLM)
+3. Run `setup.sh` — starts `eval-hub-server` on `localhost:18080`, registers providers, installs `evalhub-mcp`
+4. Verify all tools respond: `lm_eval`, `garak`, `evalhub`, `evalhub-mcp`
 
 ---
 
-## Architecture: Local-First, then Kubernetes
+## Architecture
 
 ```
-Sections 01–02: Everything runs on your LAPTOP
-  lm_eval ──────────► OpenRouter (cloud inference, free API)
-  garak   ──────────► OpenRouter (adversarial probes)
-
-Sections 03–04: Moves to the CLUSTER
-  evalhub CLI ──────► EvalHub server (OpenShift/RHOAI)
-                           │
-                       LMEvalJob CRs ──► OpenRouter
+Your laptop (everything runs here)
+  lm_eval ──────────► model endpoint (OpenRouter / Ollama / vLLM)
+  garak   ──────────► model endpoint (adversarial probes)
+  evalhub CLI ──────► eval-hub-server (localhost:18080)
+  evalhub-mcp ──────► eval-hub-server (localhost:18080)  [Act 3]
 ```
 
-The first two hands-on sections require no Kubernetes access.
-You only need your laptop and an OpenRouter API key.
-
----
-
-## Self-Contained Design
-
-`uv sync` installs all dependencies (`lm-eval`, `garak`, `eval-hub-sdk`, `kfp`, etc.)
-into `.venv` at the repo root. This section only configures credentials.
-
-`reset.sh` clears the `.workshop-env` file and EvalHub CLI config.
+No Kubernetes. No cluster credentials. No `oc` CLI.
 
 ---
 
@@ -48,5 +34,5 @@ into `.venv` at the repo root. This section only configures credentials.
 |------|---------|
 | `README.md` | This file |
 | `lab.md` | Step-by-step instructions |
-| `setup.sh` | Configures env file and evalhub CLI |
-| `reset.sh` | Clears env file and CLI config |
+| `setup.sh` | Starts eval-hub-server, registers providers, installs evalhub-mcp |
+| `reset.sh` | Clears `.workshop-env` and stops background servers |

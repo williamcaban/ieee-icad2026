@@ -8,7 +8,6 @@ set -euo pipefail
 
 WORKSHOP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSHOP_ENV_FILE="${WORKSHOP_ROOT}/.workshop-env"
-WORKSHOP_NAMESPACE="workshop-eval"
 
 info() { echo "[INFO]  $*"; }
 ok()   { echo "[OK]    $*"; }
