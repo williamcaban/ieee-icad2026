@@ -112,7 +112,7 @@ Lab: `01-setup/lab.md`
 | `garak: command not found` | Same | Same |
 | `MODEL_ENDPOINT not set` | `.workshop-env` not edited | Edit `.workshop-env`, set endpoint and key, re-run `bash setup.sh` |
 | `eval-hub-server` fails to start | Port 18080 in use | `lsof -ti:18080 \| xargs kill -9`, then re-run |
-| `evalhub-mcp` not found | Homebrew not installed | `bash 04-mcp-compare/setup.sh` runs a GitHub release fallback |
+| `evalhub-mcp` not found | Homebrew not installed | `bash 04-compare/setup.sh` runs a GitHub release fallback |
 | `evalhub health` times out | Server still starting | Wait 10 s and retry; check `/tmp/evalhub-local.log` |
 | Ollama not responding | `ollama serve` not started | `ollama serve &` in another terminal |
 
@@ -250,7 +250,7 @@ evalhub benchmarks list    # should show icad2026-irr-safety
 ## Act 3 — MCP Research Interface (23 min)
 
 Slides: `slides/04-mcp-slides.md`  
-Lab: `04-mcp-compare/lab.md`
+Lab: `04-compare/lab.md`
 
 ### Timing guide
 

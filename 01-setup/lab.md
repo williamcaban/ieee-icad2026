@@ -43,7 +43,6 @@ Verify the tools are available:
 lm_eval --help | head -1        # Expected: usage: lm-eval ...
 garak --version                 # Expected: garak LLM vulnerability scanner v0.15.x
 evalhub version                 # Expected: evalhub 0.4.x
-evalhub-mcp --version           # Expected: evalhub-mcp 0.x.x  (for Act 3)
 ```
 
 **What each tool is:**
@@ -53,7 +52,6 @@ evalhub-mcp --version           # Expected: evalhub-mcp 0.x.x  (for Act 3)
 | `lm_eval` | Runs curated safety benchmarks against any OpenAI-compatible model endpoint |
 | `garak` | Systematically probes models with adversarial inputs to find exploitable weaknesses |
 | `evalhub` | CLI for submitting evaluation jobs and reading results — works identically locally and on Kubernetes |
-| `evalhub-mcp` | MCP server that exposes EvalHub to any AI coding assistant or Python script (Act 3) |
 
 ---
 
@@ -99,7 +97,6 @@ bash setup.sh
 3. Exports `OPENAI_API_KEY` (the alias that `lm-eval` and `garak` read internally)
 4. Starts `eval-hub-server --local` on port `18080` in the background
 5. Registers the `lm_evaluation_harness` and `garak` providers
-6. Installs `evalhub-mcp` binary (for Act 3 MCP comparison)
 
 Expected output:
 
@@ -192,4 +189,4 @@ You now have:
 
 **`evalhub health` fails** — The server may have stopped. Re-run `bash setup.sh`.
 
-**`evalhub-mcp` not found** — Run `bash setup.sh` again; it installs via Homebrew or the GitHub release fallback.
+**`garak` command not found** — Run `source .venv/bin/activate` from the repo root.

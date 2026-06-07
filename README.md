@@ -91,7 +91,7 @@ cd 01-setup && bash setup.sh
 │   └── config/rails.co          #         Two Colang rules: PII + jailbreak
 ├── 03-irr-local/                # 18 min │ Act 2: IRR computation + benchmark registration
 │   └── data/annotations-sample.csv
-├── 04-mcp-compare/              # 23 min │ Act 3: Jupyter/Python MCP comparison notebook
+├── 04-compare/              # 23 min │ Act 3: Jupyter/Python MCP comparison notebook
 │
 ├── config/                      # eval-hub-server provider configs
 │   └── providers/               # lm_eval.yaml, garak.yaml
@@ -192,7 +192,7 @@ evalhub eval run \
 ### Act 3 — MCP Comparison (Section 04)
 
 ```bash
-cd 04-mcp-compare && bash setup.sh
+cd 04-compare && bash setup.sh
 # Opens compare_approaches.ipynb
 # Or run standalone: python3 compare_approaches.py
 ```

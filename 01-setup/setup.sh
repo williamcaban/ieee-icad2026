@@ -140,44 +140,12 @@ echo "  Stop: kill \$(cat /tmp/evalhub-local.pid)"
 echo ""
 
 # =============================================================================
-# Step 4: Install evalhub-mcp binary (needed for Act 3)
-# =============================================================================
-_install_evalhub_mcp_from_github() {
-  local ARCH OS BINARY URL
-  ARCH="$(uname -m)"
-  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-  [[ "${ARCH}" == "arm64" ]] && ARCH="arm64" || ARCH="amd64"
-  BINARY="evalhub-mcp-${OS}-${ARCH}"
-  URL="https://github.com/eval-hub/eval-hub/releases/latest/download/${BINARY}"
-  info "Downloading ${BINARY} from GitHub releases..."
-  curl -fsSL --max-time 30 "${URL}" -o /usr/local/bin/evalhub-mcp && \
-    chmod +x /usr/local/bin/evalhub-mcp && \
-    ok "evalhub-mcp installed from GitHub release." || \
-    warn "GitHub release download failed. Run 04-mcp-compare/setup.sh to retry."
-}
-
-info "Checking evalhub-mcp installation..."
-if command -v evalhub-mcp >/dev/null 2>&1; then
-  ok "evalhub-mcp: $(evalhub-mcp --version 2>/dev/null || echo 'installed')"
-else
-  if command -v brew >/dev/null 2>&1; then
-    brew install eval-hub/evalhub/evalhub-mcp 2>/dev/null && \
-      ok "evalhub-mcp installed via Homebrew." || {
-      warn "Homebrew tap unavailable — falling back to GitHub release..."
-      _install_evalhub_mcp_from_github
-    }
-  else
-    _install_evalhub_mcp_from_github
-  fi
-fi
-
-# =============================================================================
-# Step 5: Configure evalhub CLI for cluster (optional — closing demo only)
+# Step 4: Configure evalhub CLI for cluster (optional — closing demo only)
 # =============================================================================
 # Cluster access is NOT required for any hands-on section of this workshop.
 # The Kubernetes demo in the closing segment uses a pre-recorded video.
 # If you have cluster access and want to test it, log in with: oc login <api>
-# The 04-mcp-compare/lab.md has the cluster switch instructions.
+# The 04-compare/lab.md has the cluster switch instructions.
 
 if command -v oc >/dev/null 2>&1 && oc whoami >/dev/null 2>&1; then
   info "Cluster access detected (optional — not needed for the workshop lab)."

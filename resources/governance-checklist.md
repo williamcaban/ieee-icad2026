@@ -13,8 +13,8 @@ After completing the workshop evaluations, use this checklist to collect artifac
 | Guardrails | Guarded eval result | `evalhub eval results guarded-promptinject --format json` | Same Garak probe re-run against NeMo Guardrails proxy — documents remediation evidence |
 | Act 2 (03) | `irr_report.json` | `cat 03-irr-local/irr_report.json` | Annotator reliability evidence: Cohen's κ, Krippendorff's α, excluded items, recommendation |
 | Act 2 (03) | Registered benchmark spec | `evalhub benchmarks show icad2026-irr-safety --format json` | Benchmark with IRR metadata embedded — the reliability evidence travels with the benchmark |
-| Act 3 (04) | `comparison_report.json` | `cat 04-mcp-compare/comparison_report.json` | Structured side-by-side comparison: baseline vs novel approach |
-| Act 3 (04) | `comparison_plot.png` | `04-mcp-compare/comparison_plot.png` | Publication-ready figure suitable for a paper or model card |
+| Act 3 (04) | `comparison_report.json` | `cat 04-compare/comparison_report.json` | Structured side-by-side comparison: baseline vs novel approach |
+| Act 3 (04) | `comparison_plot.png` | `04-compare/comparison_plot.png` | Publication-ready figure suitable for a paper or model card |
 | Guardrails | `rails.co` policy | `cat guardrails/config/rails.co` | Auditable Colang policy — the complete guardrail logic in ~30 lines |
 
 ---
@@ -81,8 +81,8 @@ evalhub benchmarks show icad2026-irr-safety --format json \
   > "${EXPORT_DIR}/irr-benchmark-spec.json"
 
 # Act 3: comparison
-cp 04-mcp-compare/comparison_report.json "${EXPORT_DIR}/"
-cp 04-mcp-compare/comparison_plot.png    "${EXPORT_DIR}/"
+cp 04-compare/comparison_report.json "${EXPORT_DIR}/"
+cp 04-compare/comparison_plot.png    "${EXPORT_DIR}/"
 
 # Guardrails: policy + remediation evidence
 cp guardrails/config/rails.co "${EXPORT_DIR}/"

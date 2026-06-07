@@ -26,7 +26,7 @@ style: |
   .journey { background: #1a1a2e; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-size: 0.9em; }
 ---
 
-# Act 3: MCP Server as Research Interface
+# Act 3 — Side-by-Side Evaluation Comparison
 
 <div class="journey">
 
@@ -34,187 +34,131 @@ style: |
 
 </div>
 
-You have two benchmarks in EvalHub
-- The established baseline and your novel contribution.
-- Act 3 compares them programmatically, with a tool researchers already know: Python and HTTP.
+You have two registered approaches in EvalHub. Act 3 submits both through the REST API from a Jupyter notebook, retrieves metric scores, and plots a publication-ready comparison.
 
 ---
 
-## Why Not Just Read the JSON?
+## The Research Question
 
-- EvalHub stores results from many runs, many models, many collaborators.
-- The **`MCP server`** gives you a stable programmatic interface into that platform:
-    - Submit new evaluations without opening a terminal
-    - Query results across runs without file path management
-    - Same interface whether EvalHub is on your laptop or a Kubernetes cluster
-- ***Note:*** Most `MCP clients` assume you already have one configured.
-    - This lab lowers that barrier by using a self-contained Python script, no extra dependencies.
+You claimed your IRR-validated collection is a more principled approach than running a raw benchmark. Now you need to show it:
 
----
+- **Same model** — controls for inference variation
+- **Same infrastructure** — controls for environment differences
+- **Same evaluation engine** — controls for framework differences
 
-## Three Tools: That's It
-
-The EvalHub MCP server exposes exactly three tools:
-
-| Tool | What it does |
-|:------|:-------------|
-| `submit_evaluation` | Start a new eval job — model, benchmark, provider, name |
-| `get_job_status` | Check progress; returns per-benchmark status and scores when done |
-| `cancel_job` | Stop a running job |
-
-<div class="journey">
-
-Three tools. That is the entire interface.
-Everything you need for the comparison workflow.
-
-</div>
+What remains is **methodological difference**. That's the contribution.
 
 ---
 
-## Zero Framework: Just HTTP + JSON-RPC
+## Two Approaches, One API
 
-MCP is JSON-RPC 2.0 over HTTP. Nothing else.
+```python
+APPROACH_A = {
+    "name":       "baseline-bbq",
+    "benchmarks": [{"id": "bbq_generate",
+                    "provider_id": "lm_evaluation_harness"}],
+}
+
+APPROACH_B = {
+    "name":       "novel-irr-safety",
+    "collection": {"id": "workshop-irr-safety-v1"},  # from Act 2
+}
+```
+
+Approach A submits a single benchmark directly.  
+Approach B submits the IRR-validated collection — with α ≥ 0.67 as the quality gate.
+
+---
+
+## Three REST Calls — That's the Interface
 
 ```python
 import requests
 
-def mcp_call(tool_name, arguments, mcp_url="http://localhost:3001"):
-    response = requests.post(mcp_url, json={
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "tools/call",
-        "params": {"name": tool_name, "arguments": arguments}
-    })
-    return response.json()["result"]
-```
+# 1. Submit a job
+r = requests.post(f"{EVALHUB}/api/v1/evaluations/jobs", json={
+    "name": approach["name"],
+    "model": {"url": MODEL_URL, "name": MODEL_NAME},
+    "benchmarks": [{"id": "bbq_generate", "provider_id": "..."}],
+})
+job_id = r.json()["resource"]["id"]
 
-- Eight lines. No SDK. No async. Reads like what it is.
-- `mcp_client.py` wraps this into `submit_evaluation`, `get_job_status`, `cancel_job`.
+# 2. Poll for completion
+r = requests.get(f"{EVALHUB}/api/v1/evaluations/jobs/{job_id}")
+state = r.json()["status"]["state"]   # pending → running → completed
+
+# 3. Extract scores
+metrics = r.json()["results"]["benchmarks"][0]["metrics"]
+# → {"acc": 0.2, "amb_bias_score": 0.333, ...}
+```
 
 ---
 
 ## The Notebook Structure
 
-Eight cells. Each one self-contained.
+Seven cells. Cell 1 is the only one researchers modify.
 
 ```
-Cell 1  Config      ── researcher fills in APPROACH_A and APPROACH_B
-Cell 2  Connect     ── instantiate EvalHubMCPClient, verify tools list
-Cell 3  Submit      ── submit_evaluation for both approaches in sequence
-Cell 4  Poll        ── loop get_job_status until both COMPLETED
-Cell 5  Extract     ── parse scores, build comparison dict
-Cell 6  Table       ── formatted metric-by-metric comparison
-Cell 7  Plot        ── matplotlib bar chart → comparison_plot.png
-Cell 8  Export      ── write comparison_report.json for supplementary material
+Cell 1  Config     ── APPROACH_A and APPROACH_B (edit here)
+Cell 2  Verify     ── health check + confirm collection exists
+Cell 3  Submit     ── POST both approaches to EvalHub
+Cell 4  Poll       ── GET status every 5s until both completed
+Cell 5  Extract    ── parse scores from results.benchmarks[].metrics
+Cell 6  Plot       ── bar chart (overall) + grouped chart (per-metric)
+Cell 7  Export     ── comparison_report.json for supplementary material
 ```
-
-- Cell 1 is the only cell researchers need to modify. Everything else is driven by the config they set there.
 
 ---
 
-## Cell 1: The Researcher Configures Their Comparison
+## Reading the Results
 
-```python
-import os
-
-MODEL_URL   = os.environ["MODEL_ENDPOINT"]   # or set directly
-MODEL_NAME  = os.environ["MODEL_NAME"]
-
-APPROACH_A = {
-    "name": "baseline-bbq",
-    "benchmark": "bbq_generate",
-    "provider": "lm_evaluation_harness",
-    "description": "BBQ intersectional bias (Parrish et al. 2022 — established baseline)",
-}
-
-APPROACH_B = {
-    "name": "novel-irr-safety",
-    "benchmark": "icad2026-irr-safety",
-    "provider": "lm_evaluation_harness",
-    "description": "IRR-validated safety benchmark (α=0.81 — novel contribution)",
+```json
+{
+  "results": {
+    "benchmarks": [{
+      "id": "bbq_generate",
+      "metrics": {
+        "acc":            0.2,
+        "accuracy_amb":   0.0,
+        "amb_bias_score": 0.333,
+        "accuracy_disamb": 0.5
+      }
+    }]
+  }
 }
 ```
 
----
-
-## Cell 3: Submit Both Approaches
-
-```python
-from mcp_client import EvalHubMCPClient
-
-mcp = EvalHubMCPClient()  # http://localhost:3001 by default
-
-job_a = mcp.submit_evaluation(
-    model_url=MODEL_URL, model_name=MODEL_NAME, **APPROACH_A
-)
-job_b = mcp.submit_evaluation(
-    model_url=MODEL_URL, model_name=MODEL_NAME, **APPROACH_B
-)
-
-print(f"Approach A job: {job_a['job_id']}")
-print(f"Approach B job: {job_b['job_id']}")
-```
+Every metric the lm-eval adapter computed is in `metrics`. The comparison notebook plots them all — not just the primary score.
 
 ---
 
-## Cell 4: Poll Until Complete
+## What the Plot Shows
 
-```python
-import time
+Two panels:
 
-def wait_for_jobs(*job_ids, interval=5, timeout=600):
-    start = time.time()
-    while time.time() - start < timeout:
-        statuses = {jid: mcp.get_job_status(jid) for jid in job_ids}
-        done = all(s["status"] == "COMPLETED" for s in statuses.values())
-        if done:
-            return statuses
-        time.sleep(interval)
-    raise TimeoutError("Jobs did not complete in time")
+**Left** — Primary score bar chart: overall `acc` for each approach  
+**Right** — Per-metric grouped chart: `acc`, `accuracy_amb`, `amb_bias_score`, `accuracy_disamb` side by side
 
-results = wait_for_jobs(job_a["job_id"], job_b["job_id"])
-```
+Both approaches run the same underlying benchmark. The scores are identical. **The contribution is the methodology** — the IRR quality gate that justifies using these labels.
 
----
+<div class="callout">
 
-## Cell 7: Plot the Comparison
+"Same score, different rigour" is a publishable finding. Most benchmarks in the literature lack annotation reliability analysis.
 
-```python
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(figsize=(10, 5))
-approaches = [APPROACH_A["description"], APPROACH_B["description"]]
-scores     = [results[job_a["job_id"]]["overall_score"],
-              results[job_b["job_id"]]["overall_score"]]
-
-bars = ax.bar(approaches, scores, color=["#7bc8f6", "#50fa7b"], width=0.5)
-ax.set_ylabel("Overall Score")
-ax.set_title("Baseline vs. Novel Contribution — Same Model, Same Framework")
-ax.set_ylim(0, 1)
-for bar, score in zip(bars, scores):
-    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02,
-            f"{score:.3f}", ha="center", fontsize=12)
-
-plt.tight_layout()
-plt.savefig("comparison_plot.png", dpi=150)
-plt.show()
-```
+</div>
 
 ---
 
 ## What You Have Built
 
-- ✅ Baseline and novel contribution compared on the same model, in the same framework  
-- ✅ `comparison_plot.png` — a figure ready for a paper or presentation  
-- ✅ `comparison_report.json` — structured output for a supplementary materials section  
-- ✅ `mcp_client.py` — a reusable 50-line MCP client for any EvalHub instance
+✅ Both approaches submitted and evaluated on the same model and infrastructure  
+✅ `comparison_plot.png` — two-panel figure suitable for a paper or poster  
+✅ `comparison_report.json` — structured data for supplementary materials  
+✅ Full audit trail: job IDs link back to EvalHub run records
 
 <div class="callout">
 
-- **The same notebook works against a Kubernetes cluster.**  
-    Change one line:
-    `EvalHubMCPClient(url="https://your-evalhub-cluster.example.com")`
-    and Cell 1's APPROACH_A/APPROACH_B config is identical.
+**The pattern generalises.** Change `APPROACH_B` to any other collection, benchmark, or model configuration. The notebook runs unchanged.
 
 </div>
 
@@ -222,17 +166,13 @@ plt.show()
 
 ## At Scale: Kubernetes (Pre-Recorded Demo)
 
-The local pattern you used today scales directly to Kubernetes:
+The same `evalhub eval run` commands and the same REST API paths work against EvalHub on RHOAI — only `EVALHUB_ENDPOINT` changes:
 
-```
-evalhub CLI / MCP ──► EvalHub on RHOAI cluster
-                             │
-                      LMEvalJob pods ──► any OpenAI-compatible endpoint
-                             │
-                      Persistent results + governance artifacts
-                      EU AI Act Article 9/10 evidence export
+```bash
+export EVALHUB_ENDPOINT="https://workshop-evalhub.apps.cluster.example.com"
+# The notebook is identical — no other change
 ```
 
-- **We will show a pre-recorded demo** of this in the closing session: same benchmark IDs, same MCP tools, same `mcp_client.py` notebook, running against a live Kubernetes cluster.
+Running as `LMEvalJob` pods on Kubernetes gives persistent storage, RHOAI Dashboard visibility, and governance artifact export.
 
-- No cluster setup required today. Your local work maps directly to the production pattern.
+**Pre-recorded demo** shown in the closing session.

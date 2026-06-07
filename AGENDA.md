@@ -12,7 +12,7 @@ Act 1 — Replicate Baseline          Act 2 — Novel Contribution         Act 3
 "Before claiming novelty,           "Package your own measurement       "Use the MCP server to run both
  replicate established work."        as a registered benchmark."         approaches and compare results."
  
- 02-local-evaluation                 03-irr-local                        04-mcp-compare
+ 02-local-evaluation                 03-irr-local                        04-compare
  (BBQ + MMLU + Garak)               (IRR → register → run)              (Jupyter + requests → evalhub-mcp)
 ```
 
@@ -102,7 +102,7 @@ No `oc` CLI. No cluster. No Kubernetes.
 |----------|---------|
 | OpenRouter 429 (rate limit) | Use `--param limit=3`; wait 60 s; free tier resets per minute |
 | `eval-hub-server` stopped | `bash 01-setup/setup.sh` restarts it |
-| `evalhub-mcp` not responding | `bash 04-mcp-compare/setup.sh` restarts it; verify `localhost:3001` |
+| `evalhub-mcp` not responding | `bash 04-compare/setup.sh` restarts it; verify `localhost:3001` |
 | `irr_report.json` missing | Complete Section 03 first; `bash 03-irr-local/setup.sh` to reset |
 | IRR benchmark not registered | Re-run `python3 scripts/register_benchmark.py` without `--dry-run` in `03-irr-local/` |
 | Participant behind | `bash reset.sh` + `bash setup.sh` in current section |

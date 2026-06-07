@@ -28,7 +28,7 @@ Include Krippendorff's α alongside the label distribution in any dataset card o
 
 **Use the MCP notebook as a comparison template**
 
-`04-mcp-compare/compare_approaches.py` and `compare_approaches.ipynb` are designed as reusable templates. Change `APPROACH_A` and `APPROACH_B` in Cell 1 to compare any two benchmarks — or any two model configurations (e.g., fine-tuned vs base, guarded vs unguarded). The plot and export cells stay unchanged.
+`04-compare/compare_approaches.py` and `compare_approaches.ipynb` are designed as reusable templates. Change `APPROACH_A` and `APPROACH_B` in Cell 1 to compare any two benchmarks — or any two model configurations (e.g., fine-tuned vs base, guarded vs unguarded). The plot and export cells stay unchanged.
 
 **Validate guardrail effectiveness systematically**
 

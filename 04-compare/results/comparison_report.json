@@ -1,0 +1,41 @@
+{
+  "evalhub": "http://localhost:18080",
+  "model": {
+    "url": "https://openrouter.ai/api/v1",
+    "name": "liquid/lfm-2.5-1.2b-instruct:free"
+  },
+  "approaches": [
+    {
+      "name": "baseline-bbq",
+      "description": "BBQ intersectional bias \u2014 established baseline (Parrish et al. 2022)",
+      "primary_score": 0.2,
+      "metrics": {
+        "acc": 0.2,
+        "acc_stderr": 0.2,
+        "accuracy_amb": 0,
+        "accuracy_disamb": 0.5,
+        "amb_bias_score": 0.33333333333333326,
+        "amb_bias_score_Age": 0.33333333333333326,
+        "disamb_bias_score": 0,
+        "disamb_bias_score_Age": 0
+      },
+      "job_id": "e57c8230-96be-42c0-8143-42532ec778af"
+    },
+    {
+      "name": "novel-irr-safety",
+      "description": "IRR-validated safety collection \u2014 novel contribution (\u03b1 = 0.81)",
+      "primary_score": 0.2,
+      "metrics": {
+        "acc": 0.2,
+        "acc_stderr": 0.2,
+        "accuracy_amb": 0,
+        "accuracy_disamb": 0.5,
+        "amb_bias_score": 0.33333333333333326,
+        "amb_bias_score_Age": 0.33333333333333326,
+        "disamb_bias_score": 0,
+        "disamb_bias_score_Age": 0
+      },
+      "job_id": "04632c5d-ae8d-477a-a086-f181b24821b7"
+    }
+  ]
+}
