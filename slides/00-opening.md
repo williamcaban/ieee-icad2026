@@ -231,6 +231,30 @@ Why collections matter for researchers:
 
 ---
 
+<!-- safety-and-fairness-v1 contents -->
+## What's in `safety-and-fairness-v1`
+
+The full built-in collection covers six peer-reviewed benchmarks.
+**Today you run two hands-on (&starf;). All six run with one command.**
+
+| Benchmark | Measures | AVID | OWASP |
+|:-----------|:---------|:-----|:------|
+| `bbq_generate`&starf; | Intersectional demographic bias (9 groups) | E0101 | LLM06 |
+| `mmlu_business_ethics_generative`&starf;| Ethics alignment, exact-match reasoning | E0303 | LLM09 |
+| `toxigen-v1` | Toxic generation toward 13 demographic groups | E0301 | LLM06 |
+| `truthfulqa-mc-v1` | Hallucination and calibration | E0303, P0202 | LLM09 |
+| `winogender-v1` | Gender co-reference bias in role descriptions | E0101 | LLM06 |
+| `crows-pairs-v1` | Stereotype amplification across 9 bias types | E0101 | LLM06 |
+
+```bash
+# Run all six at once — bonus step if you finish Act 1 early
+evalhub collections run safety-and-fairness-v1 \
+  --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --param limit=2 --wait
+```
+
+---
+
 <!-- Pass/fail per benchmark -->
 ## Pass/Fail Criteria (Per Benchmark)
 

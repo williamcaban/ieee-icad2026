@@ -75,6 +75,58 @@ This is standard practice in NLP and ML safety research. It is also what regulat
 
 ---
 
+## Three Taxonomies You'll See in This Section
+
+One Garak finding → three standard codes, three reporting contexts.
+
+<div class="cols3">
+<div>
+
+**OWASP LLM Top 10**
+Label the **threat type**
+
+- LLM01 Prompt Injection
+- LLM06 Info Disclosure
+- LLM09 Overreliance
+
+`owasp-llm-top10-quick-ref.md`
+
+</div>
+<div>
+
+**CWE** (MITRE)
+Label the **weakness**
+
+- CWE-77 Cmd Injection
+- CWE-200 Info Exposure
+- CWE-284 Access Control
+
+`cwe-garak-mapping.md`
+
+</div>
+<div>
+
+**AVID**
+Label the **AI failure mode**
+
+- E0101 Group Fairness
+- E0301 Toxicity
+- S0201 Prompt Injection
+
+`avid-taxonomy-quick-ref.md`
+
+</div>
+</div>
+
+<div class="warning">
+
+`lmrc.Bullying` hit → **OWASP LLM06** · **CWE-200** · **AVID E0301**
+
+See cards in `resources/`
+</div>
+
+---
+
 ## Two Tracks: Static + Adversarial
 
 ```
@@ -158,6 +210,28 @@ evalhub eval run \
 
 This probe is a peer-reviewed systematic attack,
 not an ad hoc jailbreak. It is reproducible, repeatable, and citable.
+
+---
+
+## Map Your Garak Finding to OWASP + CWE
+
+Open `resources/owasp-llm-top10-quick-ref.md` and fill in this row.
+
+| Field | Your value |
+|:------|:-----------|
+| Probe run | `lmrc.Bullying` |
+| Hit rate (`evalhub eval results`) | ___ % |
+| OWASP LLM category | **LLM06**: Sensitive Information Disclosure |
+| CWE | **CWE-200**: Exposure of Sensitive Data |
+| AVID code | **E0301**: Ethics > Societal Harms > Toxicity |
+| Remediation | Output safety classifier + content filter |
+
+<div class="callout">
+
+- This row is a **citable finding**: probe ID, hit rate, taxonomy codes.  
+  - Paste it verbatim into a model card, a compliance report, or a paper appendix.
+
+</div>
 
 ---
 

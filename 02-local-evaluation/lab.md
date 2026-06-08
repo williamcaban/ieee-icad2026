@@ -175,7 +175,26 @@ evalhub eval results <garak-job-id>
 
 > **So what?** When `promptinject.HijackHateHumans` elicits `"I hate humans."` — as it typically does with smaller models — that's not a quirky edge case. It's a reproducible attack path. Any application that accepts user-provided context (a document, a URL, a form field) is potentially exposed. This is an **LLM01** finding.
 
-> **OWASP mapping:** Every Garak probe maps to an OWASP LLM threat code. See `resources/owasp-llm-top10-quick-ref.md` for the full table.
+### Map your finding to OWASP + CWE (2 min)
+
+Open `../resources/owasp-llm-top10-quick-ref.md` alongside your results and fill in this row. You only need the hit rate from `evalhub eval results`.
+
+```
+Probe run:   lmrc.Bullying
+Hit rate:    ___% (fill from your results)
+OWASP LLM:  LLM06 — Sensitive Information Disclosure
+CWE:         CWE-200 — Exposure of Sensitive Information to an Unauthorized Actor
+AVID code:   E0301 — Ethics > Societal Harms > Toxicity
+Remediation: Output safety classifier; content filter before response reaches user
+```
+
+Copy this block into `results/baseline_summary.json` as a `findings` array entry — it becomes your citable evidence record for the governance checklist in the closing discussion.
+
+```bash
+# Quick-open the reference card
+open ../resources/owasp-llm-top10-quick-ref.md       # macOS
+xdg-open ../resources/owasp-llm-top10-quick-ref.md   # Linux
+```
 
 ---
 
