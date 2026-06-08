@@ -141,7 +141,66 @@ Recommendation: REGISTER
 
 ---
 
-## Step 3 — Register the Novel Benchmark Collection (3 min)
+## Step 3 — Inspect the Benchmark Spec Before Registering (2 min)
+
+Before registering anything, use `--dry-run` to print the full benchmark definition that will be sent to EvalHub. This is how you see what a benchmark actually looks like and how you'd write one by hand.
+
+```bash
+python3 scripts/register_benchmark.py --dry-run
+```
+
+Abbreviated expected output (truncated for readability):
+
+```json
+{
+  "apiVersion": "evalhub.rhoai.redhat.com/v1alpha1",
+  "kind": "Benchmark",
+  "metadata": {
+    "name": "workshop-irr-safety-v1",
+    "labels": { "workshop": "icad2026", "benchmark-type": "custom-irr" }
+  },
+  "spec": {
+    "description": "Custom safety benchmark ... Krippendorff Alpha = 0.8118 ...",
+    "category": "safety/custom",
+    "task_type": "binary_classification",
+    "metric": "label_accuracy",
+    "label_schema": { "safe": 0, "ambiguous": 1, "unsafe": 2 },
+    "samples_count": 20,
+    "samples": [ { "id": "T001", "text": "...", "label": "safe" }, ... ],
+    "irr_metadata": {
+      "krippendorff_alpha": 0.8118,
+      "pairwise_kappa": { "annotator_1_vs_annotator_2": 0.6694, ... },
+      "ambiguous_excluded": 0
+    },
+    "avid_mapping": "Ethics > Societal Harms > Toxicity (E0301)",
+    "owasp_llm_mapping": "LLM06 (Sensitive Information Disclosure)",
+    "cwe_mapping": "CWE-200 (Exposure of Sensitive Information)"
+  }
+}
+```
+
+### What the spec fields mean
+
+| Field | Purpose |
+|:------|:--------|
+| `apiVersion` / `kind` | EvalHub resource type — same pattern as Kubernetes manifests |
+| `task_type` | How EvalHub runs the evaluation: `binary_classification` asks the model to label each text |
+| `metric` | What score is computed: `label_accuracy` = fraction of texts where model label matches ground truth |
+| `label_schema` | Maps text labels to ordinal integers for scoring |
+| `samples` | The actual benchmark items — text + ground-truth label per item |
+| `irr_metadata` | Reliability provenance embedded in the spec: α, kappas, exclusion count |
+| `avid_mapping` / `owasp_llm_mapping` / `cwe_mapping` | Taxonomy codes travel with the benchmark — not a separate document |
+
+> **Creating a benchmark without the script:** You can write this JSON/YAML directly and register it with:
+> ```bash
+> evalhub benchmarks register --file my-benchmark.yaml
+> evalhub collections create --name my-collection --benchmarks my-benchmark-id --threshold 0.60
+> ```
+> The script automates the IRR → spec translation step; the CLI commands are the general-purpose path.
+
+---
+
+## Step 4 — Register the Novel Benchmark Collection (3 min)
 
 Register your IRR-validated benchmark as an EvalHub collection:
 
@@ -164,13 +223,16 @@ Verify registration:
 ```bash
 evalhub collections list
 # Should show: workshop-irr-safety-v1
+
+# Inspect what was registered
+evalhub collections show workshop-irr-safety-v1
 ```
 
 The reliability evidence (α = 0.81, excluded items, annotator pairs) is embedded in the collection description. Anyone using this collection can see the quality gate that was applied before registration.
 
 ---
 
-## Step 4 — (Optional) Observe the Exclusion Effect (2 min)
+## Step 5 — (Optional) Observe the Exclusion Effect (2 min)
 
 Modify one row in `data/annotations-sample.csv` — change T010's labels to create full disagreement (e.g., annotator_1 = `safe`, annotator_2 = `unsafe`, annotator_3 = `ambiguous`). Then re-run:
 
