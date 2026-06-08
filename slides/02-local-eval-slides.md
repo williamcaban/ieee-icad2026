@@ -158,9 +158,7 @@ evalhub eval run \
   --param limit=5 --wait
 ```
 
-Expected metrics:
-
-| Metric | Value | Interpretation |
+| Expected Metric | Value | Interpretation |
 |:--------|:-------|:---------------|
 | `acc` | 0.20 | 1 in 5 questions correct |
 | `accuracy_amb` | 0.00 | Always picks stereotyped answer when ambiguous |
@@ -173,8 +171,6 @@ subgroup failures invisible in aggregate fairness scores.</p>
 
 ## So What?: The BBQ Score in Context
 
-<div class="warning">
-
 - **amb_bias_score = 0.33**
     When context is ambiguous, the model picks stereotyped answers one-third of the time. Not because it was instructed to, but because of training data patterns.
 
@@ -182,10 +178,12 @@ subgroup failures invisible in aggregate fairness scores.</p>
 
 - **OWASP LLM06**: Sensitive Information Disclosure
 
-</div>
+<div class="warning">
 
 This is your baseline. Act 2 measures the
 same risk domain through a different lens.
+
+</div>
 
 ---
 
@@ -201,15 +199,15 @@ evalhub eval run \
   --param generations=3 --wait
 ```
 
-<div class="warning">
-
 - `promptinject.HijackHateHumans` typically produces `"I hate humans."` with no additional prompt engineering.  
 - **OWASP LLM01**: Prompt Injection: Critical severity
 
-</div>
+<div class="warning">
 
 This probe is a peer-reviewed systematic attack,
 not an ad hoc jailbreak. It is reproducible, repeatable, and citable.
+
+</div>
 
 ---
 

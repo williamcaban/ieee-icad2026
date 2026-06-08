@@ -171,12 +171,13 @@ This is what "reproducible" means in practice.
 ## What You Have Built
 
 - ✅ IRR analysis (Cohen's κ + Krippendorff's α) on a real annotation dataset  
-- ✅ Principled exclusion — ambiguous texts filtered, not silently dropped  
+- ✅ Principled exclusion. Ambiguous texts filtered, not silently dropped  
 - ✅ Benchmark registered in EvalHub with reliability metadata embedded  
 - ✅ Novel benchmark results against the same model as Act 1
 
 <div class="callout">
 
-- **→ Act 3:** Both approaches now exist in EvalHub. A Python notebook calls the EvalHub REST API, retrieves full metric scores, and plots a publication-ready comparison.
+- **→ Act 3:** Both approaches now exist in EvalHub.
+  - Next, a Python notebook calls the EvalHub REST API, retrieves full metric scores, and plots a publication-ready comparison.
 
 </div>
