@@ -202,11 +202,17 @@ xdg-open ../resources/owasp-llm-top10-quick-ref.md   # Linux
 
 This track demonstrates the key architectural point of EvalHub: **the same CLI works with different evaluation frameworks**. Track A used `lm_evaluation_harness`; Track C uses `lighteval` — different backend, identical command shape.
 
+> **Why a separate install?** `lighteval==0.13.0` requires `datasets>=4.0.0`, which conflicts with `garak>=0.15` (`datasets<4.0`). They cannot share a venv. LightEval is therefore installed on top of the existing venv with `--no-deps` overrides — `evalhub` and `garak` remain functional. Skip this track if you hit installation errors; Tracks A and B are the primary workshop path.
+
 ### Install LightEval (if not already done)
 
 ```bash
+# This temporarily downgrades 'datasets' in the venv (conflicts with garak).
+# Run `uv sync` afterward to restore the full environment.
 uv pip install -r adapters/lighteval/requirements.txt
 ```
+
+> **After Track C**, restore the full environment with `uv sync` before using garak again.
 
 ### Run TruthfulQA via LightEval
 

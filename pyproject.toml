@@ -40,13 +40,13 @@ guardrails = [
     # or let guardrails/setup.sh install it automatically.
     "nemoguardrails>=0.9",
 ]
-lighteval = [
-    # LightEval provider (Track C in Section 02) — install separately:
-    #   uv pip install "ieee-icad2026-workshop[lighteval]"
-    # or: uv pip install -r adapters/lighteval/requirements.txt
-    "lighteval==0.13.0",
-    "litellm[caching]==1.80.17",
-]
+# NOTE: lighteval is intentionally NOT listed here.
+# lighteval==0.13.0 requires datasets>=4.0.0, which conflicts with
+# garak>=0.15 (requires datasets>=3.0.0,<4.0). They cannot share a venv.
+# Install lighteval separately for Track C only:
+#   uv pip install -r adapters/lighteval/requirements.txt
+# or in an isolated env:
+#   uv run --with lighteval==0.13.0 python adapters/lighteval/main.py
 
 [tool.uv]
 # Don't install this repo as a Python package — it's a scripts-only workshop.
