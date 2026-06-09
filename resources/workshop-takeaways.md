@@ -1,4 +1,4 @@
-# Workshop Takeaways — What To Do Next
+# Workshop Takeaways: What To Do Next
 
 Practical next steps by role. Every pattern here was demonstrated in the workshop.
 
@@ -80,7 +80,7 @@ This makes findings interoperable with the AI vulnerability database and easier 
 
 ---
 
-## For Everyone — Three Commands to Remember
+## For Everyone: Three Commands to Remember
 
 ```bash
 # Run a safety evaluation

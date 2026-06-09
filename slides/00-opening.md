@@ -25,14 +25,17 @@ style: |
   table { font-size: 0.88em; }
   .center { text-align: center; }
   .qr-url { font-size: 1.4em; font-weight: bold; color: #ee0000; letter-spacing: 0.04em; margin-top: 0.3em; }
+  .presenter { font-size: 0.65em; color: #ee0000; margin-top: 0.2em; }
 ---
 
 <!-- Slide 1: Title -->
 # Guardrails Under Pressure
 
-### Replicating Baselines · Validating Novel Benchmarks · Comparing at Scale
+### &middot; Replicating Baselines &middot; Validating Novel Benchmarks &middot;
+#### &middot; Comparing at Scale &middot;
 
-<p class="meta">IEEE ICAD 2026 Workshop · Hands-on · All local — no cluster required</p>
+<p class="meta">IEEE ICAD 2026 Workshop &middot; Hands-on &middot; All local</p>
+<p class="presenter">William Caban &bull; Jehlum Vitasta</p>
 
 ---
 
@@ -234,24 +237,38 @@ Why collections matter for researchers:
 <!-- safety-and-fairness-v1 contents -->
 ## What's in `safety-and-fairness-v1`
 
-The full built-in collection covers six peer-reviewed benchmarks.
-**Today you run two hands-on (&starf;). All six run with one command.**
+Six peer-reviewed benchmarks. **Today you run ★ (two). All six = one command on the next slide.**
 
 | Benchmark | Measures | AVID | OWASP |
 |:-----------|:---------|:-----|:------|
-| `bbq_generate`&starf; | Intersectional demographic bias (9 groups) | E0101 | LLM06 |
-| `mmlu_business_ethics_generative`&starf;| Ethics alignment, exact-match reasoning | E0303 | LLM09 |
+| `bbq_generate`★ | Intersectional demographic bias (9 groups) | E0101 | LLM06 |
+| `mmlu_business_ethics_generative`★ | Ethics alignment, exact-match reasoning | E0303 | LLM09 |
 | `toxigen-v1` | Toxic generation toward 13 demographic groups | E0301 | LLM06 |
 | `truthfulqa-mc-v1` | Hallucination and calibration | E0303, P0202 | LLM09 |
 | `winogender-v1` | Gender co-reference bias in role descriptions | E0101 | LLM06 |
 | `crows-pairs-v1` | Stereotype amplification across 9 bias types | E0101 | LLM06 |
 
+---
+
+<!-- safety-and-fairness-v1 bonus command -->
+## Running the Full Collection
+
+**(Bonus step)** If you finish **Act 1** early,
+run all six benchmarks with one command:
+
 ```bash
-# Run all six at once — bonus step if you finish Act 1 early
 evalhub collections run safety-and-fairness-v1 \
-  --model-url "${MODEL_ENDPOINT}" --model-name "${MODEL_NAME}" \
+  --model-url "${MODEL_ENDPOINT}" \
+  --model-name "${MODEL_NAME}" \
   --param limit=2 --wait
 ```
+
+<div class="callout">
+
+`limit=2` keeps it within the OpenRouter free-tier rate limit.  
+Remove `--param limit=2` to run the full benchmark suite.
+
+</div>
 
 ---
 
@@ -305,11 +322,12 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 <!-- Slide 8: Three Acts — overview -->
 ## Three Acts Today
 
-| Act | What you do | Section | Time |
+| Act | What you do | Section | Time (min)|
 |:-----|:------------|---------|------|
-| **1. Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | 22 min |
-| **2. Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | 18 min |
-| **3. Comparison** | Jupyter notebook calls EvalHub REST API, compare both approaches, plot the result | 04 | 23 min |
+| **&rarr; Setup Laptop** | Setup local EvalHub server | 01 | ~10 |
+| **1. Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | ~20 |
+| **2. Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | ~15 |
+| **3. Comparison** | Jupyter notebook calls EvalHub REST API, compare both approaches, plot the result | 04 | ~20 |
 
 ---
 

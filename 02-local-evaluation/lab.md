@@ -198,6 +198,61 @@ xdg-open ../resources/owasp-llm-top10-quick-ref.md   # Linux
 
 ---
 
+## Track C — LightEval Provider (optional, 4 min)
+
+This track demonstrates the key architectural point of EvalHub: **the same CLI works with different evaluation frameworks**. Track A used `lm_evaluation_harness`; Track C uses `lighteval` — different backend, identical command shape.
+
+### Install LightEval (if not already done)
+
+```bash
+uv pip install -r adapters/lighteval/requirements.txt
+```
+
+### Run TruthfulQA via LightEval
+
+```bash
+evalhub eval run \
+  --name "act1-truthfulqa-lighteval" \
+  --provider lighteval \
+  --benchmark truthfulqa_lighteval \
+  --model-url "${MODEL_ENDPOINT}" \
+  --model-name "${MODEL_NAME}" \
+  --param limit=5 \
+  --wait
+```
+
+Expected output:
+
+```
+BENCHMARK              PROVIDER    METRIC    VALUE
+truthfulqa_lighteval   lighteval   mc1       0.40
+truthfulqa_lighteval   lighteval   mc2       0.58
+```
+
+### (Optional) Run WinoGender
+
+```bash
+evalhub eval run \
+  --name "act1-winogender-lighteval" \
+  --provider lighteval \
+  --benchmark winogender_lighteval \
+  --model-url "${MODEL_ENDPOINT}" \
+  --model-name "${MODEL_NAME}" \
+  --param limit=5 \
+  --wait
+```
+
+### Interpreting Track C
+
+| Metric | Benchmark | OWASP | AVID | What it means |
+|--------|-----------|-------|------|---------------|
+| `mc1` < 0.50 | TruthfulQA | LLM09 | E0303 | Model picks false answers at human-myth rate — overreliance risk |
+| `acc` < 0.60 | WinoGender | LLM06 | E0101 | Model resolves pronouns by occupational stereotype |
+
+> **The architectural point:** `evalhub providers list` now shows three registered backends — `lm_evaluation_harness`, `garak`, and `lighteval`. The eval-hub-server routes each job to the correct adapter. You add a new evaluation framework by writing one adapter and one provider YAML — the orchestration layer is unchanged.
+
+---
+
 ## Track A + Track B Together
 
 | Source | Finding | OWASP | Severity |

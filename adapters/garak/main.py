@@ -38,29 +38,29 @@ class GarakAdapter(FrameworkAdapter):
         from datetime import UTC, datetime
 
         start = time.time()
-        logger.info(f"Job {spec.id}: probe={spec.benchmark_id} model={spec.model.name}")
+        logger.info(f"Job {config.id}: probe={config.benchmark_id} model={config.model.name}")
 
         try:
             callbacks.report_status(JobStatusUpdate(
                 status=JobStatus.RUNNING, phase=JobPhase.INITIALIZING, progress=0.0,
-                message=MessageInfo(message=f"Preparing garak probe: {spec.benchmark_id}",
+                message=MessageInfo(message=f"Preparing garak probe: {config.benchmark_id}",
                                     message_code="initializing"),
             ))
 
-            model_url  = spec.model.url or os.environ.get("MODEL_ENDPOINT",
+            model_url  = config.model.url or os.environ.get("MODEL_ENDPOINT",
                                                            "https://openrouter.ai/api/v1")
-            model_name = spec.model.name
+            model_name = config.model.name
             api_key    = os.environ.get("OPENROUTER_API_KEY",
                           os.environ.get("OPENAI_API_KEY", ""))
-            generations = int(spec.parameters.get("generations", 3))
-            report_dir  = Path(f"/tmp/evalhub-garak/{spec.id}")
+            generations = int(config.parameters.get("generations", 3))
+            report_dir  = Path(f"/tmp/evalhub-garak/{config.id}")
             report_dir.mkdir(parents=True, exist_ok=True)
             report_prefix = str(report_dir / "report")
 
             # ── Running probes ────────────────────────────────────────────────
             callbacks.report_status(JobStatusUpdate(
                 status=JobStatus.RUNNING, phase=JobPhase.RUNNING_EVALUATION, progress=0.2,
-                message=MessageInfo(message=f"Running garak probe: {spec.benchmark_id}",
+                message=MessageInfo(message=f"Running garak probe: {config.benchmark_id}",
                                     message_code="running_evaluation"),
             ))
 
@@ -74,7 +74,7 @@ class GarakAdapter(FrameworkAdapter):
 
             _config.plugins.target_type = "rest"
             _config.plugins.target_name = f"{model_url.rstrip('/')}/chat/completions"
-            _config.plugins.probe_spec = spec.benchmark_id
+            _config.plugins.probe_spec = config.benchmark_id
             _config.run.generations = generations
             _config.run.deprefix = True
             _config.run.parallel_attempts = False
@@ -105,7 +105,7 @@ class GarakAdapter(FrameworkAdapter):
             _config.transient.reportfile = open(report_jsonl, "w", encoding="utf-8")
             _config.transient.report_prefix = report_prefix
 
-            probe_specs = [p.strip() for p in spec.benchmark_id.split(",")]
+            probe_specs = [p.strip() for p in config.benchmark_id.split(",")]
             for probe_spec in probe_specs:
                 try:
                     probe = plugins.load_plugin(f"probes.{probe_spec}", config_root=_config)
@@ -170,9 +170,9 @@ class GarakAdapter(FrameworkAdapter):
 
             duration = time.time() - start
             return JobResults(
-                id=spec.id,
-                benchmark_id=spec.benchmark_id,
-                benchmark_index=spec.benchmark_index,
+                id=config.id,
+                benchmark_id=config.benchmark_id,
+                benchmark_index=config.benchmark_index,
                 model_name=model_name,
                 results=evaluation_results,
                 overall_score=overall,

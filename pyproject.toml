@@ -9,7 +9,8 @@ dependencies = [
     # Section 02 — lm-evaluation-harness (baseline replication)
     "lm-eval>=0.4",
     # Section 02 — Garak red-teaming framework (adversarial baseline)
-    "garak>=0.9",
+    # 0.15+ registers the garak CLI binary; earlier versions only have python -m garak
+    "garak>=0.15",
     # Section 03 — Inter-Rater Reliability computation (novel contribution)
     "krippendorff>=0.6",
     "scikit-learn>=1.3",
@@ -38,6 +39,13 @@ guardrails = [
     #   uv pip install "ieee-icad2026-workshop[guardrails]"
     # or let guardrails/setup.sh install it automatically.
     "nemoguardrails>=0.9",
+]
+lighteval = [
+    # LightEval provider (Track C in Section 02) — install separately:
+    #   uv pip install "ieee-icad2026-workshop[lighteval]"
+    # or: uv pip install -r adapters/lighteval/requirements.txt
+    "lighteval==0.13.0",
+    "litellm[caching]==1.80.17",
 ]
 
 [tool.uv]

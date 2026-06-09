@@ -170,9 +170,9 @@ Two panels:
 
 ---
 
-## At Scale: Kubernetes (Pre-Recorded Demo)
+## At Scale: Kubernetes
 
-The same `evalhub eval run` commands and the same REST API paths work against EvalHub on K8s, only `EVALHUB_ENDPOINT` changes:
+The same `evalhub eval run` commands and REST API paths work against EvalHub on K8s, only `EVALHUB_ENDPOINT` changes:
 
 ```bash
 export EVALHUB_ENDPOINT="https://workshop-evalhub.apps.cluster.example.com"
@@ -181,4 +181,14 @@ export EVALHUB_ENDPOINT="https://workshop-evalhub.apps.cluster.example.com"
 
 Running as `LMEvalJob` pods on Kubernetes gives persistent storage, RHOAI Dashboard visibility, and governance artifact export.
 
-**Pre-recorded demo** shown in the closing session.
+---
+
+## Pre-Recorded Demos
+
+Watch these after the session to see the full cluster-scale workflow:
+
+- [(demo)](https://interact.redhat.com/share/GkiNIu6IqVRB04UolnoN) **Red Teaming via EvalHub and Guardrails** 
+  - Adversarial probe runs + NeMo Guardrails proxy. The same pattern from the guardrails demo, running on RHOAI/Kubernetes.
+<br />
+- [(demo)](https://interact.redhat.com/share/JKcSMeq3lPdyMQ2Kzful) **Running Evaluations & Evaluation Collections with EvalHub**
+  - Full collection runs and result comparison, same commands, cluster scale.

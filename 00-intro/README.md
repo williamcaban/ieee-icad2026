@@ -1,6 +1,6 @@
 # Section 00 — Opening Presentation Guide
 
-**Duration**: 8 minutes · **Mode**: Presenter-led · **Slides**: `slides/00-opening.md`
+**Duration**: 10 minutes · **Mode**: Presenter-led · **Slides**: `slides/00-opening.md`
 
 Render slides: `marp slides/00-opening.md --output slides/00-opening.html`
 
@@ -79,13 +79,27 @@ At scale (closing demo): evalhub CLI → RHOAI cluster  → LMEvalJob pod → mo
 
 ---
 
-### Slide 7 — Safety Frameworks (60 seconds)
+### Slides — EvalHub Collections + `safety-and-fairness-v1` (90 seconds)
 
-Keep this fast. Participants will use the quick-ref cards in `resources/`.
+Two slides: first shows what a collection is; second shows the six benchmarks in `safety-and-fairness-v1` with AVID and OWASP codes.
 
-Key point: these frameworks are not bureaucracy — they're the vocabulary that lets different teams (ML, security, legal, compliance) talk about the same risks without talking past each other.
+> "Today you run two of these six — BBQ and MMLU. The other four — ToxiGen, TruthfulQA, WinoGender, CrowS-Pairs — are in the collection. One command runs all six if you finish Act 1 early."
 
-> "When you map a garak finding to OWASP LLM01 and CWE-77, a security engineer who has never heard of garak immediately understands what you found."
+Point at the ★ markers in the table. Note that the AVID and OWASP columns on that table are the same vocabulary participants will use in the OWASP mapping step in Act 1.
+
+> "These taxonomy codes — OWASP LLM06, AVID E0101 — are not bureaucracy. They're the shared vocabulary that lets ML engineers, security teams, and compliance reviewers talk about the same finding without talking past each other. Section 02 will show you how to fill in those codes from your actual results."
+
+Do not spend time explaining OWASP or AVID here — Section 02 has a dedicated taxonomy slide with definitions. Mention them as a preview only.
+
+---
+
+### Slide 7 — Pass/Fail + Weighted Scoring (60 seconds)
+
+Show how per-benchmark thresholds and collection weights translate a set of scores into a single governance verdict.
+
+> "The threshold is in the spec, not the documentation. Anyone who reproduces the evaluation gets the same pass/fail decision — not just the same numbers."
+
+This is the connection to the regulatory slides: Article 9 of the EU AI Act requires reproducible risk assessments. A collection with embedded thresholds is what that looks like in practice.
 
 ---
 

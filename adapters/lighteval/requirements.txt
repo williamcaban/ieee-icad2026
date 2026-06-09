@@ -1,0 +1,5 @@
+lighteval==0.13.0
+litellm[caching]==1.80.17
+requests>=2.28
+pydantic>=2.0
+eval-hub-sdk[adapter]>=0.4
