@@ -35,7 +35,6 @@ style: |
 </div>
 
 - **Goal:** One working `evalhub` CLI pointed at a live local server.  
-- **Time:** 12 minutes
 - **Needs cluster?** No, everything runs on your laptop.
 
 ---
@@ -49,7 +48,7 @@ bash setup.sh
      ├── 2. Source .workshop-env → validate MODEL_ENDPOINT and API key
      ├── 3. Export OPENAI_API_KEY (alias required by lm-eval internals)
      ├── 4. Start eval-hub-server on localhost:18080
-     ├── 5. Register providers: lm_evaluation_harness, garak
+     ├── 5. Register providers: lm_evaluation_harness, garak, lighteval
 
 ```
 
@@ -64,6 +63,7 @@ If anything breaks, `bash setup.sh` resets you.
 |:------|:------------|:----------------|
 | `lm_eval` | Benchmark harness for established safety tasks | `pytest` for your model |
 | `garak` | Adversarial probe framework | Fuzzing for prompts |
+| `lighteval` | Alternative benchmark framework (Track C) | Second test runner |
 | `eval-hub-server` | Local evaluation orchestrator | MLflow for safety evals |
 | `evalhub` CLI | Submit jobs, read results | `mlflow run` equivalent |
 
@@ -82,6 +82,7 @@ evalhub health
 evalhub providers list
 # lm_evaluation_harness  (2 benchmarks)
 # garak                  (2 benchmarks)
+# lighteval              (2 benchmarks)  ← Track C provider
 ```
 
 <div class="callout">

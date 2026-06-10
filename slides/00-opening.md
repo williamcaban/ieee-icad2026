@@ -192,7 +192,7 @@ A guardrail with no evaluation is security theatre.
 ---
 
 <!-- NeMo Guardrails -->
-## NeMo Guardrails in This Workshop
+## Guardrails in This Workshop
 
 **`NeMo Guardrails`** (NVIDIA, open source) enforces policy via **Colang**, a readable, auditable rules language.
 
@@ -319,19 +319,100 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 ---
 
-<!-- Slide 8: Three Acts — overview -->
-## Three Acts Today
+<!-- Divider: hands-on lab begins -->
 
-| Act | What you do | Section | Time (min)|
-|:-----|:------------|---------|------|
-| **&rarr; Setup Laptop** | Setup local EvalHub server | 01 | ~10 |
-| **1. Replicating Baselines** | Run established benchmarks exactly as peer literature defines them | 02 | ~20 |
-| **2. Novel Contribution** | Compute IRR and register your benchmark alongside the baseline | 03 | ~15 |
-| **3. Comparison** | Jupyter notebook calls EvalHub REST API, compare both approaches, plot the result | 04 | ~20 |
+<div class="center">
+
+# 🧪 Hands-On Lab
+
+### The next slides are your step-by-step guide.
+### Follow along, every command is copy-paste ready.
+
+</div>
 
 ---
 
-<!-- Slide 9: Act 1 detail -->
+<!-- Architecture local -->
+## Architecture: All Local (your laptop)
+
+```
+[Act 1 & Act 2]
+
+evalhub CLI ───────► eval-hub-server (localhost:18080)
+                           │
+               ┌───────────┴────────────────┐
+          lm_eval adapter         garak adapter
+          (BBQ, MMLU)             (adversarial probes)
+          lighteval adapter ─ ─ ─ (optional, Track C)
+               └───────────┬────────────────┘
+                           │  (any OpenAI-compatible endpoint)
+                           ▼
+              OpenRouter · Ollama · vLLM
+
+─────────────────────────────────────────────────────
+
+[Act 3]
+
+Jupyter / Python ──► evalhub (localhost:18080) 
+```
+
+---
+
+<!-- Repository QR -->
+## Get the Workshop Material
+
+<div class="center">
+
+![width:300px](./00_qr_guardrails_under_pressure.png)
+
+<p class="qr-url">red.ht/guardrails</p>
+
+</div>
+
+---
+
+<!-- Setup Laptop -->
+## Setup Your Laptop
+
+<p class="qr-url">red.ht/guardrails</p>
+
+```bash
+# clone the repo
+git clone https://github.com/williamcaban/ieee-icad2026.git
+cd ieee-icad2026
+# setup uv environment
+brew install uv    # (optional) if "uv" is not already installed
+uv sync            # install all dependencies into an uv environment
+source .venv/bin/activate     # activate the uv virtual environment
+cd 01-setup && bash setup.sh  # setup lab configuration
+```
+
+- ✅ Every command is in `lab.md`, copy-paste is the intended workflow
+- ✅ Each section has `reset.sh`, clean state in under a minute
+
+<div class="warning">
+
+⚠️ Run `source .workshop-env` whenever you open a new terminal.  
+If anything breaks: `bash setup.sh` resets everything.
+
+</div>
+
+
+---
+
+<!-- Three Acts — overview -->
+## Three Acts Today
+
+| | Section | What you do | Time |
+|--|:-----|:------------|------|
+| 01 | **Setup Laptop** | Local EvalHub server + 3 providers registered | ~5 min |
+| 02 | **Act 1 · Baselines** | BBQ bias + MMLU ethics + Garak probes | ~15 min |
+| 03 | **Act 2 · Contribution** | Register a novel benchmark (e.g., IRR computation) | ~15 min |
+| 04 | **Act 3 · Comparison** | Jupyter/Python → EvalHub Server → plot | ~10 min |
+
+---
+
+<!-- Act 1 detail -->
 ## Act 1: Replicating Established Baselines
 
 `Section 02`
@@ -349,7 +430,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 `Section 03`
 
-- Compute **Inter-Rater Reliability** on your annotation dataset. Your IRR methodology is the contribution, a principled quality gate for benchmark construction.
+- Compute **Inter-Rater Reliability** on your annotation dataset. In this workshop, the IRR methodology script (a principled quality gate for benchmark construction), represents the "contribution".
 
 - Register it in EvalHub alongside the baseline, so Act 3 can compare them on equal footing.
 
@@ -364,7 +445,7 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 `Section 04`
 
-- A **Python/Jupyter notebook** calls the EvalHub REST API directly to submit both approaches, retrieve full metric scores, and plot a publication-ready comparison.
+- A **Python/Jupyter notebook** calls the EvalHub Server API directly to submit both approaches, retrieve full metric scores, and plot a publication-ready comparison.
 
 - Submit both approaches. Poll until complete. Plot the comparison. Export a publication-ready figure.
 
@@ -374,13 +455,15 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 ---
 
-<!-- Slide 12: Tool stack -->
+<!-- Tool stack -->
 ## The Tools
 
-| Tool | What it is | Role today |
+| Tool | What it is | Role |
 |:------|:------------|:------------|
 | `lm-eval` | lm-evaluation-harness | Established benchmark harness (BBQ, MMLU) |
 | `garak` | Adversarial probe framework | Systematic red-teaming baseline |
+| `lighteval` | LightEval framework | _(optional)_ Track C alternative provider |
+| `NeMo Guardrails` | NVIDIA guardrail proxy | _(optional)_ Guardrails lab between Acts 1 and 2 (see guardrails/) |
 | `eval-hub-server` | Local eval orchestrator | Reproducible tracking, same API as cluster |
 | `evalhub` CLI | Submit / retrieve jobs | Identical on laptop and Kubernetes |
 
@@ -388,32 +471,10 @@ The weighted score across all benchmarks must reach the collection threshold. Yo
 
 ---
 
-<!-- Slide 13: Architecture local -->
-## Architecture: All Local (your laptop)
+<!-- Kubernetes scale-up -->
+## At Scale: Kubernetes (after Act 3)
 
-```
-SECTIONS 01–04 (your laptop — everything runs here)
-─────────────────────────────────────────────────────
-
-Jupyter / Python ──► evalhub (localhost:3001) [Act 3]
-
-evalhub CLI ───────► eval-hub-server (localhost:18080)
-                           │
-               ┌───────────┴───────────┐
-          lm_eval adapter         garak adapter
-          (BBQ, MMLU)             (adversarial probes)
-               └───────────┬───────────┘
-                           │  (any OpenAI-compatible endpoint)
-                           ▼
-              OpenRouter · Ollama · vLLM
-```
-
----
-
-<!-- Slide 14: Kubernetes scale-up -->
-## At Scale: Kubernetes
-
-Same commands. Same benchmark IDs. Same MCP notebook.
+Same commands. Same benchmark. Same notebook.
 
 ```
 evalhub CLI ──► EvalHub on RHOAI cluster
@@ -428,46 +489,9 @@ evalhub CLI ──► EvalHub on RHOAI cluster
 
 ---
 
-<!-- Slide 15: Ground rules -->
-## Ground Rules
-
-- ✅ Every command is in `lab.md` (copy-paste is the intended workflow)
-- ✅ Every expected output is shown (troubleshooting section included)
-- ✅ Each section has `reset.sh` (run it to get back to a clean state)
-- ✅ OpenRouter free tier: 20 req/min (labs are designed within this limit)
-
-<div class="warning">
-
-⚠️ Run `source .workshop-env` whenever you open a new terminal.
-
-</div>
-
----
-
-<!-- Slide 16: Start -->
-## Start Section 01 Now
-
-```bash
-source .venv/bin/activate
-cd 01-setup && bash setup.sh
-```
-
-- Takes about 30 seconds. Read the output.
-
-- What `setup.sh` does?
-  - Starts `eval-hub-server` on `localhost:18080`,
-  - registers `lm-eval` and `garak` providers, installs `evalhub`
-
----
-
-<!-- Slide 17: Repository QR -->
-## Get the Workshop Material
-
+<!-- Handoff to Section 01 -->
 <div class="center">
 
-![width:300px](./00_qr_guardrails_under_pressure.png)
-
-<p class="qr-url">red.ht/guardrails</p>
+## Let's Start the guided lab
 
 </div>
-

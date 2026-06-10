@@ -46,32 +46,32 @@ style: |
 
   **But what if the annotators disagreed?**
 
-  - If three annotators labelled the same text as `safe`, `unsafe`, and `ambiguous`, whose label is correct?
+  - If three annotators labelled the same text as `safe`, `unsafe`, and `ambiguous`, <u>whose label is correct</u>?
 
     The model's score is measuring label disagreement, not model safety.
 
-  This is not a corner case. It is endemic to benchmark construction in safety and fairness evaluation. Most published benchmarks do not report inter-rater reliability.
+- This is not a corner case. It is endemic to benchmark construction in safety and fairness evaluation. <u>Most published benchmarks do not report inter-rater reliability.</u>
 
 <div class="warning">
 
-A benchmark with low annotator agreement is not a benchmark,
-it is noise with a citation.
+A benchmark with low annotator agreement
+is not a benchmark, it is noise with a citation.
 
 </div>
 
 ---
 
-## Your Contribution: An IRR Quality Gate
+## Demo Contribution: An IRR Quality Gate
 
-- **IRR analysis applied as a pre-registration quality gate** is itself a research contribution.
+- **IRR analysis applied as a pre-registration quality gate** (the research contribution).
 
-  It answers: *before running a model against this dataset, can you demonstrate the labels are reliable enough to draw conclusions from?*
+  It answers: *before running a model against this dataset, <u>can you demonstrate the labels are reliable enough to draw conclusions from</u>?*
 
 <div class="analogy">
 
-- Imagine two radiologists labelling X-rays as "concerning" or "clear."  
-If they agree 95% of the time: trust the label.  
-If they agree 50% of the time: the label is a coin flip.  
+- Imagine two radiologists labelling X-rays as "concerning" or "clear."
+  - If they agree 95% of the time: trust the label.
+  - If they agree 50% of the time: the label is a coin flip.
 - **`Krippendorff's Alpha`** quantifies this for any number of annotators.
 
 </div>
@@ -83,13 +83,16 @@ If they agree 50% of the time: the label is a coin flip.
 ```
 annotations-sample.csv ──► compute_irr.py ──► irr_report.json
       │                                              │
-  20 texts              Cohen's Kappa (pairwise)  Clean benchmark spec
-  3 annotators          Krippendorff's Alpha      α embedded as metadata
-  safe/unsafe/ambiguous Ambiguous text detection  Excluded items listed
-                                                  Recommendation: REGISTER
+  20 texts               Cohen's Kappa (pairwise)  Clean benchmark spec
+  3 annotators           Krippendorff's Alpha      α embedded as metadata
+  safe/unsafe/ambiguous  Ambiguous text detection  Excluded items listed
+
+                                                   Recommendation: REGISTER
 ```
 
-- `irr_report.json` is a **reproducibility artifact**. It contains the raw annotations, the computed metrics, the excluded items, and the decision. Anyone reading your benchmark can verify the α (alpha) value without re-running your annotation pipeline.
+- `irr_report.json` is a **reproducibility artifact**. 
+  - <u>It contains the raw annotations, the computed metrics, the excluded items, and the decision.</u>
+  - Anyone reading your benchmark can verify the α (alpha) value without re-running your annotation pipeline.
 
 ---
 
@@ -128,7 +131,7 @@ evalhub collections list   # confirm workshop-irr-safety-v1 appears
 
 ---
 
-## Running the Novel Benchmark
+## Running the New Benchmark
 
 Run against the same model used in Act 1:
 
@@ -162,7 +165,8 @@ Same model, same framework. Act 3 can now compare on equal footing.
 }
 ```
 
-- The reliability evidence travels with the benchmark. Anyone who runs `evalhub benchmarks show icad2026-irr-safety` sees the α value, the annotator pairs, the threshold, not a link to a separate PDF.
+- The reliability evidence travels with the benchmark. Anyone who runs `evalhub benchmarks show icad2026-irr-safety` sees the α value,
+the annotator pairs, the threshold. (Not a link to a separate PDF.)
 
 This is what "reproducible" means in practice.
 

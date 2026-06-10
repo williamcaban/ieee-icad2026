@@ -40,11 +40,14 @@ You have two registered approaches in EvalHub. Act 3 submits both through the RE
 
 ## The Research Question
 
-You claimed your IRR-validated collection is a more principled approach than running a raw benchmark. Now you need to show it:
+We claimed our IRR-validated collection is a more
+principled approach than running a raw benchmark.
 
-- **Same model**: controls for inference variation
-- **Same infrastructure**: controls for environment differences
-- **Same evaluation engine**: controls for framework differences
+- Now we need to show it:
+
+  - **Same model**: controls for inference variation
+  - **Same infrastructure**: controls for environment differences
+  - **Same evaluation engine**: controls for framework differences
 
 <div class="warning">
 
@@ -74,7 +77,7 @@ APPROACH_B = {
 
 ---
 
-## Three REST Calls as the Interface
+## Three Calls
 
 ```python
 import requests
@@ -122,9 +125,9 @@ Cell 7  Export     ── comparison_report.json for supplementary material
     "benchmarks": [{
       "id": "bbq_generate",
       "metrics": {
-        "acc":            0.2,
-        "accuracy_amb":   0.0,
-        "amb_bias_score": 0.333,
+        "acc":             0.2,
+        "accuracy_amb":    0.0,
+        "amb_bias_score":  0.333,
         "accuracy_disamb": 0.5
       }
     }]
@@ -132,16 +135,16 @@ Cell 7  Export     ── comparison_report.json for supplementary material
 }
 ```
 
-Every metric the lm-eval adapter computed is in `metrics`. The comparison notebook plots them all — not just the primary score.
+Every metric the adapter computed is in `metrics` JSON key.
+The comparison notebook plots them all, not just the primary score.
 
 ---
 
 ## What the Plot Shows
 
-Two panels:
-
-- **Left** panel: Primary score bar chart: overall `acc` for each approach  
-- **Right** panel: Per-metric grouped chart: `acc`, `accuracy_amb`, `amb_bias_score`, `accuracy_disamb` side by side
+- Two panels:
+  - **Left** panel: Primary score bar chart: overall `acc` for each approach  
+  - **Right** panel: Per-metric grouped chart: `acc`, `accuracy_amb`, `amb_bias_score`, `accuracy_disamb` side by side
 
 - Both approaches run the same underlying benchmark. 
   - The scores are identical. 
@@ -149,7 +152,8 @@ Two panels:
 
 <div class="callout">
 
-"Same score, different rigour" is a publishable finding. Most benchmarks in the literature lack annotation reliability analysis.
+"Same score, different rigour" is a publishable finding.
+Most benchmarks in the literature lack annotation reliability analysis.
 
 </div>
 
